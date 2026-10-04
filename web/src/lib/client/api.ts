@@ -1,4 +1,5 @@
 import type { ChatRequest, ChatResponse } from "@/lib/api";
+import { translateEnglish, type TFunction } from "@/lib/i18n-core";
 
 export class ApiError extends Error {
   readonly status: number;
@@ -11,21 +12,21 @@ export class ApiError extends Error {
   }
 }
 
-/** Human wording for an error; always plain text. */
-export function describeError(error: unknown): string {
+/** Human wording for an error; always plain text. Pass `t` (from `useT`) to get it in the selected language. */
+export function describeError(error: unknown, t: TFunction = translateEnglish): string {
   if (error instanceof ApiError) {
     if (error.status === 429) {
       return error.retryAfter
-        ? `Too many requests. You can try again in ${error.retryAfter} s.`
-        : "Too many requests. Please try again later.";
+        ? t("Too many requests. You can try again in {n} s.", { n: error.retryAfter })
+        : t("Too many requests. Please try again later.");
     }
-    if (error.status === 503) return "The service is busy or not configured. Please try again later.";
-    if (error.status === 502) return "The data service is unavailable. Please try again later.";
-    if (error.status === 404) return "Nothing was found for this request.";
-    if (error.status === 422) return "The request was not accepted. Check the values and try again.";
-    return "The request failed. Please try again.";
+    if (error.status === 503) return t("The service is busy or not configured. Please try again later.");
+    if (error.status === 502) return t("The data service is unavailable. Please try again later.");
+    if (error.status === 404) return t("Nothing was found for this request.");
+    if (error.status === 422) return t("The request was not accepted. Check the values and try again.");
+    return t("The request failed. Please try again.");
   }
-  return "The network request failed. Check your connection and try again.";
+  return t("The network request failed. Check your connection and try again.");
 }
 
 function parseRetryAfter(value: string | null): number | null {

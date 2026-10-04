@@ -9,7 +9,7 @@ import { installProxyFetch, renderWithApp } from "./helpers";
 vi.mock("next/navigation", () => ({ usePathname: () => "/i/data-quality", useRouter: () => ({ push: vi.fn() }) }));
 // Leaflet needs a real layout engine; the pane's own wiring is what is under test here.
 vi.mock("leaflet", () => {
-  const map = { setView: () => map, fitBounds: vi.fn(), invalidateSize: vi.fn(), remove: vi.fn() };
+  const map = { setView: () => map, getZoom: () => 4, fitBounds: vi.fn(), invalidateSize: vi.fn(), remove: vi.fn() };
   const layer = { addTo: () => layer, clearLayers: vi.fn() };
   const L = {
     map: () => map,

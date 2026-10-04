@@ -6076,3 +6076,26 @@ Source: `src/oah/bathing_samples/storage.py`, `build.py`, `constants.py`, `store
 ### Next step
 
 - Maintainer: commit and push (Vercel redeploys the web by itself); then rebuild the backend image and redeploy so the chat fix is live.
+
+## 2026-10-04 -- Agent: Claude -- Web: place finder, map scope, interface language; README; pH bound; .claude history
+
+### Done
+
+- Place finder in the sidebar under the country selector (`web/src/components/place-finder.tsx`); the inline site pickers of the index panels are gone and the panels read the place chosen in the sidebar or on the map. The map follows one rule (`web/src/lib/places.ts`): "New question" shows every site and bathing water of the country, an index shows its own kind only; picking a place centres the map on it. Expand/Shrink button on the map pane (desktop).
+- Interface language: the whole interface follows the language selector (default es-MX). Texts are keyed by their English wording (`t("...")`); 25 dictionaries in `web/src/lib/locales/` (machine-drafted, NOT reviewed by native speakers); `web/scripts/i18n.mjs` extracts the 307 keys and checks every dictionary (also part of `npm run check`). Numbers and country names follow the language; `<html lang>` follows it; `/catalog` is asked in the language. Design and limits: `docs/web_app_i18n.md`. Verified in a browser (es-MX default, switch to German). `npm run check` equivalents run outside the repository: typecheck, lint, i18n check, 146 tests, build, all green.
+- Waterbase store build now drops pH values outside 0 to 14 (`oah.waterbase.mapping.PLAUSIBLE_RANGES`, counter `dropped_implausible_value`; `docs/waterbase_store.md`, `docs/unvalidated_values_register.md`). The maintainer rebuilt the store (built 2026-10-04T20:04Z): 805 impossible pH values dropped, none left outside 0 to 14; Cloud Run revision 00006 serves it; live check through the web found no pH outside 0 to 14 in 309 Italian annual values (range 6.2 to 8.3 in the sample). Known limit: Italy still holds pH minima near 1.0 inside the scale; no stricter cut was applied because none has a source.
+- README rewritten (how to run the backend, data stores, chat, web, tests, limits); LICENSE (MIT) unchanged.
+- `.claude/` : `.gitignore` now ignores everything but `.claude/settings.json`; the maintainer rewrote the public history (git filter-branch in a separate clone, forced push, new head b48ba93) so `.claude/agents`, `.claude/commands` and `.claude/launch.json` are in no commit. The old commits stay reachable by their SHA on GitHub until GitHub purges them.
+- Chat guard: the URL filter no longer flags "data:" followed by a space; the chat prompt forbids legal act numbers and years not in tool results (deployed in revision 00005).
+
+### Not done (needs the maintainer or other access)
+
+- Commit and push of the web changes (Vercel redeploys by itself); human review of the machine-drafted translations (es-MX first); live chat questions 5 to 14; Devpost text and video; optional GitHub support request to purge the old commits.
+
+### Files touched
+
+- `web/src/**` (components, lib, locales), `web/tests/**`, `web/scripts/i18n.mjs`, `web/package.json`, `web/vitest.setup.ts`, `src/oah/waterbase/{mapping,aggregate,build}.py`, `tests/unit/test_waterbase_build.py`, `README.md`, `.gitignore`, `docs/web_app_i18n.md`, `docs/waterbase_store.md`, `docs/unvalidated_values_register.md`, `docs/handoff/LEDGER.md`.
+
+### Next step
+
+- Maintainer: `git status`, then commit and push the pending changes; open the live web once in es-MX and in English.

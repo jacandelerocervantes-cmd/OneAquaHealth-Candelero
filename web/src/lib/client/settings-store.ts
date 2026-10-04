@@ -86,6 +86,11 @@ export function updateSettings(patch: Partial<Settings>): void {
   listeners.forEach((l) => l());
 }
 
+/** The current settings outside React (formatting helpers read the selected language from here). */
+export function getSettings(): Settings {
+  return getSnapshot();
+}
+
 export function useSettings(): Settings {
   return useSyncExternalStore(subscribe, getSnapshot, () => DEFAULT_SETTINGS);
 }

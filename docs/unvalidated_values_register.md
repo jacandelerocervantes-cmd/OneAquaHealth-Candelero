@@ -437,3 +437,10 @@ All CONVENTION, chosen with the maintainer's request for fewer false-precision f
 | `BELOW_DETECTION_SHARE_THRESHOLD` | 0.25 | `src/oah/chat/precision.py` |
 | `MAX_EXACT_VALUES`, `MAX_EVIDENCE_ITEMS`, `MAX_EVIDENCE_CHARS` | 10, 20, 12000 | `src/oah/chat/evidence.py` |
 
+
+## Waterbase pH plausibility bound (2026-10-04)
+
+- Value: 0 to 14, applied by the store build to pH only (`oah.waterbase.mapping.PLAUSIBLE_RANGES`).
+- Basis: the definition of the pH scale; not taken from a regulation or a dataset.
+- Status: unvalidated as a data-quality rule; it removes impossible values only and says nothing about plausible-looking
+  errors. See `docs/waterbase_store.md`.

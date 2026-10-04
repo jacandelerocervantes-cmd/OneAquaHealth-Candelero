@@ -54,6 +54,7 @@ from oah.waterbase.mapping import (
     MATRICES,
     MIN_YEAR,
     MISSING_VALUE_STATUSES,
+    PLAUSIBLE_RANGES,
     SOURCE_LABEL,
     SOURCE_URL,
 )
@@ -132,6 +133,7 @@ def build_store(
                 "min_year": min_year,
                 "dropped_observation_statuses": sorted(MISSING_VALUE_STATUSES),
                 "below_loq": "counted in n_below_loq, never used as a value",
+                "plausible_ranges": {code: list(bounds) for code, bounds in sorted(PLAUSIBLE_RANGES.items())},
                 "aggregation": "n, sum, min, max per (country, site, category, determinand, matrix, unit, year, month); any coarser mean is sum / n; no median",
             },
             sort_keys=True,

@@ -7,7 +7,7 @@ import LabView from "@/components/lab-view";
 import SettingsView from "@/components/settings-view";
 import { updateSettings, useSettings } from "@/lib/client/settings-store";
 import { buildCatalog } from "@/lib/server/mock/catalog";
-import { installProxyFetch, jsonResponse, renderWithApp } from "./helpers";
+import { BATHING_GR, SITE_GR, installProxyFetch, jsonResponse, renderWithApp, renderWithPlace } from "./helpers";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/", useRouter: () => ({ push: vi.fn() }) }));
 
@@ -16,10 +16,6 @@ beforeEach(() => {
   updateSettings({ country: "GR", defaultCountry: "GR", language: "en", defaultLanguage: "en" });
 });
 afterEach(() => vi.unstubAllGlobals());
-
-async function pickSite(id = "mock-gr-001") {
-  await userEvent.selectOptions(await screen.findByTestId("site-select"), id);
-}
 
 describe("index data panels", () => {
   it("asks for a site first", async () => {
@@ -30,8 +26,7 @@ describe("index data panels", () => {
 
   it("water parameters: measurements table with origin, freshness and the route's notice", async () => {
     installProxyFetch();
-    renderWithApp(<IndexData indexId="water-parameters" />);
-    await pickSite();
+    renderWithPlace(<IndexData indexId="water-parameters" />, SITE_GR);
     const table = await screen.findByRole("table", { name: "Measurements" });
     expect(within(table).getAllByRole("row").length).toBeGreaterThan(2);
     const footer = screen.getByTestId("source-footer");
@@ -42,16 +37,14 @@ describe("index data panels", () => {
 
   it("solids and turbidity: asks the route for that group only", async () => {
     const { calls } = installProxyFetch();
-    renderWithApp(<IndexData indexId="solids-turbidity" />);
-    await pickSite();
+    renderWithPlace(<IndexData indexId="solids-turbidity" />, SITE_GR);
     await screen.findByRole("table", { name: "Measurements" });
     expect(calls.some((c) => c.url.includes("/measurements") && c.url.includes("group=solids-turbidity"))).toBe(true);
   });
 
   it("weather: shows the Open-Meteo credit link and the aggregated-to-months note", async () => {
     installProxyFetch();
-    renderWithApp(<IndexData indexId="weather" />);
-    await pickSite();
+    renderWithPlace(<IndexData indexId="weather" />, SITE_GR);
     const link = await screen.findByRole("link", { name: "Weather data by Open-Meteo.com" });
     expect(link).toHaveAttribute("href", "https://open-meteo.com/");
     expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
@@ -61,12 +54,10 @@ describe("index data panels", () => {
 
   it("river discharge and species render with their notices", async () => {
     installProxyFetch();
-    const first = renderWithApp(<IndexData indexId="river-discharge" />);
-    await pickSite();
+    const first = renderWithPlace(<IndexData indexId="river-discharge" />, SITE_GR);
     expect(await screen.findByRole("table", { name: "Monthly river discharge (modelled)" })).toBeInTheDocument();
     first.unmount();
-    renderWithApp(<IndexData indexId="species-nearby" />);
-    await pickSite();
+    renderWithPlace(<IndexData indexId="species-nearby" />, SITE_GR);
     const table = await screen.findByRole("table", { name: "Species occurrence records" });
     expect(table).toHaveTextContent("CC0-1.0");
     expect(table).toHaveTextContent("Mock citation");
@@ -77,8 +68,7 @@ describe("index data panels", () => {
     const first = renderWithApp(<IndexData indexId="bathing-classes" />);
     expect(await screen.findByRole("table", { name: "Bathing waters" })).toHaveTextContent("Mock Beach Aegean");
     first.unmount();
-    renderWithApp(<IndexData indexId="bathing-samples" />);
-    await userEvent.selectOptions(await screen.findByTestId("bw-select"), "MOCKGR0001");
+    renderWithPlace(<IndexData indexId="bathing-samples" />, BATHING_GR);
     await screen.findByRole("table", { name: /Sample summary/ });
     expect(screen.getByTestId("source-footer")).toHaveTextContent("No threshold or limit is applied");
   });
@@ -88,17 +78,8 @@ describe("index data panels", () => {
     const first = renderWithApp(<IndexData indexId="data-quality" />);
     expect(await screen.findByRole("table", { name: "Findings" })).toBeInTheDocument();
     first.unmount();
-    renderWithApp(<IndexData indexId="water-quality" />);
-    await pickSite();
+    renderWithPlace(<IndexData indexId="water-quality" />, SITE_GR);
     expect(await screen.findByText("MOCK: no reference limits are applied to simulated values.")).toBeInTheDocument();
-  });
-
-  it("shows the empty state when a site search finds nothing", async () => {
-    installProxyFetch();
-    renderWithApp(<IndexData indexId="weather" />);
-    await screen.findByTestId("site-select");
-    await userEvent.type(screen.getByLabelText("Search sites"), "zzzz");
-    expect(await screen.findByTestId("no-sites")).toBeInTheDocument();
   });
 
   it("shows an error state with retry, and a 429 countdown, when a data route fails", async () => {
@@ -133,7 +114,7 @@ describe("IndexView", () => {
     expect(about).toHaveTextContent("Greece");
     expect(about).toHaveTextContent("Real · EEA bathing samples");
     const below = await screen.findByTestId("below-answers");
-    expect(await within(below).findByTestId("bw-select")).toBeInTheDocument();
+    expect(await within(below).findByText("Choose a bathing water", { selector: "p" })).toBeInTheDocument();
   });
 
   it("explains an index that does not apply to the country instead of showing it empty", async () => {

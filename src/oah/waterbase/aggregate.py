@@ -19,6 +19,7 @@ from oah.waterbase.mapping import (
     LOWER_RELIABILITY_STATUSES,
     MIN_YEAR,
     MISSING_VALUE_STATUSES,
+    PLAUSIBLE_RANGES,
 )
 
 
@@ -139,6 +140,10 @@ def aggregate_disaggregated(lines: Iterable[bytes], min_year: int = MIN_YEAR) ->
         value = None if below else _to_float(row[c_value].strip())
         if not below and value is None:
             counters["dropped_no_numeric_value"] += 1
+            continue
+        bounds = PLAUSIBLE_RANGES.get(code)
+        if value is not None and bounds is not None and not bounds[0] <= value <= bounds[1]:
+            counters["dropped_implausible_value"] += 1
             continue
         # Interned strings: the same site, unit and code recur millions of times, so one object each keeps the memory flat.
         key: Key = (

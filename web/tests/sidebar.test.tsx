@@ -15,7 +15,7 @@ vi.mock("next/navigation", () => ({
 
 beforeEach(() => {
   window.localStorage.clear();
-  updateSettings({ country: "GR", defaultCountry: "GR" });
+  updateSettings({ country: "GR", defaultCountry: "GR", language: "en", defaultLanguage: "en" });
   push.mockClear();
 });
 afterEach(() => vi.unstubAllGlobals());
@@ -81,7 +81,8 @@ describe("Sidebar", () => {
     await userEvent.selectOptions(screen.getByTestId("country-select"), "NO");
     await waitFor(() => expect(screen.queryByText("Bathing classes")).toBeNull());
     expect(screen.queryByText("Organic matter")).toBeNull();
-    expect(calls.some((c) => c.url === "/api/oah/catalog?country=NO")).toBe(true);
+    // The catalogue is asked in the selected language, so the reasons it returns are written in it.
+    expect(calls.some((c) => c.url === "/api/oah/catalog?country=NO&language=en")).toBe(true);
     expect(screen.getByText("Water quality")).toBeInTheDocument();
   });
 

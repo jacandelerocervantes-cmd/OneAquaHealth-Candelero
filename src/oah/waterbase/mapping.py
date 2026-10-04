@@ -44,6 +44,11 @@ BELOW_LOQ_TRUE: frozenset[str] = frozenset({"1", "true", "TRUE", "True"})
 # First sampling year kept. A choice of this project (recent monitoring only, smaller store), not a property of
 # the data; ``scripts/build_waterbase_store.py --min-year`` changes it and the value is stored in the provenance.
 MIN_YEAR = 2010
+# Physically possible range per determinand code: an observed value outside it is a data-entry or unit error and is
+# dropped (counted as ``dropped_implausible_value``), never aggregated. Only the pH scale (0 to 14, by definition of the
+# scale for dilute aqueous solutions) is bounded: it is the one range that follows from the definition of the quantity
+# and not from a judgement about typical waters (docs/waterbase_store.md, docs/unvalidated_values_register.md).
+PLAUSIBLE_RANGES: dict[str, tuple[float, float]] = {"EEA_3152-01-0": (0.0, 14.0)}
 
 # confidentialityStatus of the spatial table: ``F`` = free for publication, ``N`` = not for publication (the file's
 # definition, see docs/waterbase_store.md). Only ``F`` allows coordinates to be stored or shown; any other value, a blank

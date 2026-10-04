@@ -3,12 +3,15 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState, type ReactNode } from "react";
 import { AppProvider, useApp } from "@/lib/client/app-context";
+import { useSettings } from "@/lib/client/settings-store";
 import { FIXED_NOTICE } from "@/lib/constants";
+import { intlTag, useT } from "@/lib/i18n";
 import Sidebar from "./sidebar";
 import { Loading } from "./ui";
 
 // Leaflet touches `window`: it is loaded only in the browser and only when the pane is opened.
 const MapPane = dynamic(() => import("./map-pane"), { ssr: false, loading: () => <div className="p-3"><Loading label="Loading map" /></div> });
+// Loading's label is an English key: it is translated inside Loading.
 
 type Mode = "mock" | "real" | null;
 
@@ -31,7 +34,14 @@ function useDataMode(): Mode {
 
 function Shell({ children }: { children: ReactNode }) {
   const app = useApp();
+  const t = useT();
   const mode = useDataMode();
+  const { language } = useSettings();
+
+  // The document language follows the interface language (screen readers, hyphenation, quotation marks).
+  useEffect(() => {
+    document.documentElement.lang = intlTag(language);
+  }, [language]);
   const { sidebarOpen, mapOpen, setSidebarOpen, setMapOpen } = app;
   const [mapWide, setMapWide] = useState(false);
 
@@ -55,19 +65,19 @@ function Shell({ children }: { children: ReactNode }) {
           <div className="h-full shadow-xl">
             <Sidebar />
           </div>
-          <button type="button" aria-label="Close menu" onClick={() => app.setSidebarOpen(false)} className="flex-1 bg-black/40" />
+          <button type="button" aria-label={t("Close menu")} onClick={() => app.setSidebarOpen(false)} className="flex-1 bg-black/40" />
         </div>
       ) : null}
 
       <main className="flex min-w-0 flex-1 flex-col">
         {mode === "mock" ? (
           <div role="status" data-testid="mock-banner" className="bg-mock-bg px-4 py-1 text-center text-xs font-medium text-mock-ink">
-            Mock data mode: every value is simulated for the interface demo and is not real monitoring data.
+            {t("Mock data mode: every value is simulated for the interface demo and is not real monitoring data.")}
           </div>
         ) : null}
         {children}
         <p data-testid="fixed-notice" className="border-t border-line bg-canvas px-4 py-1.5 text-center text-xs text-muted">
-          {FIXED_NOTICE}
+          {t(FIXED_NOTICE)}
         </p>
       </main>
 

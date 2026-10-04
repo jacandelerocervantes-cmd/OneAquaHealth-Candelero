@@ -5,6 +5,7 @@ import type { ChatIndex, ChatRequest, LanguagesResponse } from "@/lib/api";
 import { ApiError, apiChat, deadlineFrom, describeError } from "@/lib/client/api";
 import { useApp, type ChatMessage, type ErrorMessage } from "@/lib/client/app-context";
 import { updateSettings, useSettings } from "@/lib/client/settings-store";
+import { useT } from "@/lib/i18n";
 import { useApi } from "@/lib/client/use-api";
 import { MAX_HISTORY_TURNS, MAX_MESSAGE_LENGTH, SUGGESTIONS } from "@/lib/constants";
 import { AnswerCard } from "./answer";
@@ -42,6 +43,7 @@ interface Props {
 
 export function ChatView({ chatKey, country, chatIndex, indexId, below }: Props) {
   const app = useApp();
+  const t = useT();
   const settings = useSettings();
   const languages = useApi<LanguagesResponse>("/languages");
   const messages = app.getChat(chatKey);
@@ -116,7 +118,7 @@ export function ChatView({ chatKey, country, chatIndex, indexId, below }: Props)
         id: nextId(),
         role: "error",
         status: error instanceof ApiError ? error.status : 0,
-        text: describeError(error),
+        text: describeError(error, t),
         retryAt: retryAfter ? deadlineFrom(retryAfter) : null,
         retryText: full,
       };
@@ -147,13 +149,13 @@ export function ChatView({ chatKey, country, chatIndex, indexId, below }: Props)
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-6" data-testid="conversation">
           {messages.length === 0 && !pending ? (
-            <EmptyState title="Ask a question about the water data">
-              <p>Answers are written from the data the service returns, with their sources.</p>
+            <EmptyState title={t("Ask a question about the water data")}>
+              <p>{t("Answers are written from the data the service returns, with their sources.")}</p>
               <ul className="mt-3 flex flex-col items-center gap-2">
                 {suggestions.map((s) => (
                   <li key={s}>
-                    <button type="button" onClick={() => setText(s)} className="rounded-full border border-line px-3 py-1 text-sm hover:bg-sidebar">
-                      {s}
+                    <button type="button" onClick={() => setText(t(s))} className="rounded-full border border-line px-3 py-1 text-sm hover:bg-sidebar">
+                      {t(s)}
                     </button>
                   </li>
                 ))}
@@ -165,7 +167,7 @@ export function ChatView({ chatKey, country, chatIndex, indexId, below }: Props)
             if (m.role === "user") {
               return (
                 <div key={m.id} data-testid="user-message" className="ml-auto max-w-[85%] rounded-2xl bg-sidebar px-4 py-2">
-                  {m.context ? <p className="text-xs text-muted">Context: {m.context}</p> : null}
+                  {m.context ? <p className="text-xs text-muted">{t("Context: {name}", { name: m.context })}</p> : null}
                   <p className="whitespace-pre-wrap break-words">{m.text}</p>
                 </div>
               );
@@ -178,7 +180,7 @@ export function ChatView({ chatKey, country, chatIndex, indexId, below }: Props)
                 <p className="font-medium text-bad-ink">{m.text}</p>
                 {m.status === 429 ? (
                   <p data-testid="retry-countdown" className="mt-1 text-muted">
-                    {waitLeft > 0 ? `You can send again in ${waitLeft} s.` : "You can send again now."}
+                    {waitLeft > 0 ? t("You can send again in {n} s.", { n: waitLeft }) : t("You can send again now.")}
                   </p>
                 ) : null}
                 {m.retryText ? (
@@ -188,7 +190,7 @@ export function ChatView({ chatKey, country, chatIndex, indexId, below }: Props)
                     onClick={() => void submit(m.retryText ?? "", true)}
                     className="mt-2 rounded-md border border-line px-3 py-1 hover:bg-sidebar disabled:opacity-50"
                   >
-                    Try again
+                    {t("Try again")}
                   </button>
                 ) : null}
               </div>
@@ -209,15 +211,15 @@ export function ChatView({ chatKey, country, chatIndex, indexId, below }: Props)
         <div className="mx-auto max-w-3xl space-y-2">
           {app.place ? (
             <div data-testid="context-chip" className="flex items-center gap-2 text-xs">
-              <span className="rounded-full bg-sidebar px-2.5 py-1">Context: {app.place.name}</span>
+              <span className="rounded-full bg-sidebar px-2.5 py-1">{t("Context: {name}", { name: app.place.name })}</span>
               <button type="button" onClick={() => app.setPlace(null)} className="text-muted underline">
-                Remove
+                {t("Remove")}
               </button>
             </div>
           ) : null}
           <div className="rounded-2xl border border-line bg-surface p-2">
             <label htmlFor="question" className="sr-only">
-              Your question
+              {t("Your question")}
             </label>
             <textarea
               id="question"
@@ -226,13 +228,13 @@ export function ChatView({ chatKey, country, chatIndex, indexId, below }: Props)
               onKeyDown={onKeyDown}
               rows={2}
               maxLength={maxLength}
-              placeholder="Ask about the data for the selected country"
+              placeholder={t("Ask about the data for the selected country")}
               className="w-full resize-none bg-transparent px-2 py-1 outline-none"
             />
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <label htmlFor="language" className="sr-only">
-                  Answer language
+                  {t("Language")}
                 </label>
                 <select
                   id="language"
@@ -255,7 +257,7 @@ export function ChatView({ chatKey, country, chatIndex, indexId, below }: Props)
                 disabled={pending || blocked || !text.trim()}
                 className="rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-ink disabled:opacity-50"
               >
-                {blocked ? `Wait ${waitLeft} s` : "Send"}
+                {blocked ? t("Wait {n} s", { n: waitLeft }) : t("Send")}
               </button>
             </div>
           </div>

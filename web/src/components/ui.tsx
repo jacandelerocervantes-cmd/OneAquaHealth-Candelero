@@ -3,12 +3,14 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { Schema } from "@/lib/api";
 import { ApiError, deadlineFrom, describeError } from "@/lib/client/api";
-import { KIND_DOT, originInfo } from "@/lib/constants";
+import { FRESHNESS_LABEL, KIND_DOT, originInfo } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 
-/** Every text below is a React text node: nothing here parses HTML or markdown. */
+/** Every text below is a React text node: nothing here parses HTML or markdown. Texts are shown through `t()`. */
 
 export function OriginBadge({ origin }: { origin: string }) {
+  const t = useT();
   const info = originInfo(origin);
   const tone =
     info.kind === "synthetic"
@@ -17,26 +19,20 @@ export function OriginBadge({ origin }: { origin: string }) {
         ? "bg-warn-bg text-warn-ink"
         : "bg-ok-bg text-ok-ink";
   return (
-    <span title={info.hint} data-testid="origin-badge" data-origin={origin} className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${tone}`}>
+    <span title={t(info.hint)} data-testid="origin-badge" data-origin={origin} className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${tone}`}>
       <span aria-hidden className={`h-2 w-2 rounded-full ${KIND_DOT[info.kind]}`} />
-      {info.label}
+      {t(info.label)}
     </span>
   );
 }
 
-const FRESHNESS_LABEL: Record<Schema<"DataFreshnessModel">["status"], string> = {
-  live: "Live",
-  snapshot: "Snapshot",
-  "snapshot-stale": "Stale snapshot",
-  unknown: "Freshness unknown",
-};
-
 export function FreshnessBadge({ freshness }: { freshness: Schema<"DataFreshnessModel"> }) {
+  const t = useT();
   const stale = freshness.status === "snapshot-stale" || freshness.status === "unknown";
   return (
     <span data-testid="freshness-badge" className={`inline-flex rounded-full px-2.5 py-0.5 text-xs ${stale ? "bg-warn-bg text-warn-ink" : "bg-sidebar text-muted"}`}>
-      {FRESHNESS_LABEL[freshness.status]}
-      {freshness.as_of ? ` · as of ${formatDate(freshness.as_of)}` : ""}
+      {t(FRESHNESS_LABEL[freshness.status] ?? freshness.status)}
+      {freshness.as_of ? ` · ${t("as of {date}", { date: formatDate(freshness.as_of) })}` : ""}
     </span>
   );
 }
@@ -56,10 +52,12 @@ export function Notice({ children, tone = "warn", title }: { children: ReactNode
   );
 }
 
+/** `label` is an English key (translated here), so callers pass the English text. */
 export function Loading({ label = "Loading" }: { label?: string }) {
+  const t = useT();
   return (
     <div role="status" aria-live="polite" data-testid="loading" className="space-y-2 py-2">
-      <span className="sr-only">{label}</span>
+      <span className="sr-only">{t(label)}</span>
       <div className="h-3 w-2/3 animate-pulse rounded bg-line" />
       <div className="h-3 w-1/2 animate-pulse rounded bg-line" />
       <div className="h-3 w-3/4 animate-pulse rounded bg-line" />
@@ -80,18 +78,19 @@ export function useCountdown(retryAt: number | null): number {
 }
 
 export function ErrorBox({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+  const t = useT();
   const retryAfter = error instanceof ApiError && error.status === 429 ? error.retryAfter : null;
   const [retryAt] = useState(() => (retryAfter ? deadlineFrom(retryAfter) : null));
   const left = useCountdown(retryAt);
   const waiting = left > 0;
-  const message = describeError(error);
+  const message = describeError(error, t);
   return (
     <div role="alert" data-testid="error-box" className="rounded-lg bg-bad-ink/0 px-3 py-3 text-sm ring-1 ring-bad-ink/30">
       <p className="font-medium text-bad-ink">{message}</p>
-      {waiting ? <p data-testid="retry-countdown" className="mt-1 text-muted">Retry available in {left} s.</p> : null}
+      {waiting ? <p data-testid="retry-countdown" className="mt-1 text-muted">{t("Retry available in {n} s.", { n: left })}</p> : null}
       {onRetry ? (
         <button type="button" onClick={onRetry} disabled={waiting} className="mt-2 rounded-md border border-line px-3 py-1 text-sm hover:bg-sidebar disabled:opacity-50">
-          Try again
+          {t("Try again")}
         </button>
       ) : null}
     </div>
@@ -119,9 +118,10 @@ export function Async<T>({
   isEmpty?: (data: T) => boolean;
   empty?: ReactNode;
 }) {
+  const t = useT();
   if (state.status === "loading") return <Loading />;
   if (state.status === "error") return <ErrorBox error={state.error} onRetry={state.reload} />;
-  if (isEmpty?.(state.data)) return <>{empty ?? <EmptyState title="Nothing to show" />}</>;
+  if (isEmpty?.(state.data)) return <>{empty ?? <EmptyState title={t("Nothing to show")} />}</>;
   return <>{children(state.data)}</>;
 }
 

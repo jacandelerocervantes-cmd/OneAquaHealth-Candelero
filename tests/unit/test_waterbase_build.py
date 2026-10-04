@@ -14,6 +14,7 @@ from waterbase_fixtures import (
     NITRATE,
     NITRITE,
     OXYGEN,
+    PH,
     TOTAL_P,
     build_fixture_store,
     disaggregated_lines,
@@ -61,6 +62,29 @@ def test_two_samples_of_the_same_month_are_summed_and_a_bad_month_is_dropped():
     assert aggregates[key] == [2.0, 5.0, 1.0, 4.0, 0.0, 0.0]
     assert ("IT", "IT01-001025", "RW", NITRATE[0], "W", "mg{NO3}/L", 2015, 7) in aggregates
     assert counters["dropped_bad_date"] == 2 and len(aggregates) == 2
+
+
+def test_ph_values_outside_the_scale_are_dropped_and_counted_and_never_aggregated():
+    rows = [
+        obs(PH, "7.4", date="20150312"), obs(PH, "8.2", date="20150320"),
+        obs(PH, "74", date="20150321"), obs(PH, "-1", date="20150322"), obs(PH, "14.5", date="20150323"),
+        obs(PH, "0", date="20150401"), obs(PH, "14", date="20150402"),  # the bounds themselves are kept
+        obs(NITRATE, "74", date="20150312"),  # no other determinand is bounded
+        obs(PH, "99", date="20160101"),  # a month holding only an implausible value creates no group
+    ]
+    aggregates, counters = _aggregates(rows)
+    march = aggregates[("IT", "IT01-001025", "RW", PH[0], "W", "[pH]", 2015, 3)]
+    assert march == pytest.approx([2.0, 15.6, 7.4, 8.2, 0.0, 0.0])
+    assert aggregates[("IT", "IT01-001025", "RW", PH[0], "W", "[pH]", 2015, 4)][:4] == [2.0, 14.0, 0.0, 14.0]
+    assert aggregates[("IT", "IT01-001025", "RW", NITRATE[0], "W", "mg{NO3}/L", 2015, 3)][3] == 74.0
+    assert ("IT", "IT01-001025", "RW", PH[0], "W", "[pH]", 2016, 1) not in aggregates
+    assert counters["dropped_implausible_value"] == 4
+
+
+def test_the_plausible_ranges_are_stored_in_the_provenance_filters():
+    from oah.waterbase.mapping import PLAUSIBLE_RANGES
+
+    assert PLAUSIBLE_RANGES == {"EEA_3152-01-0": (0.0, 14.0)}
 
 
 def test_el_is_stored_as_gr_and_the_other_country_codes_are_kept():

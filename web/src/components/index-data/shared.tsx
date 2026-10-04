@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import type { Schema } from "@/lib/api";
 import { useApp, type PickedPlace } from "@/lib/client/app-context";
 import { useSettings } from "@/lib/client/settings-store";
+import { useT } from "@/lib/i18n";
 import { EmptyState, FreshnessBadge, OriginBadge } from "../ui";
 
 export type Freshness = Schema<"DataFreshnessModel">;
@@ -42,6 +43,11 @@ export function usePlace(kind: Kind): [PickedPlace | null, (p: PickedPlace | nul
   return [valid, setPlace];
 }
 
-export function PickPrompt() {
-  return <EmptyState title="Choose a site">Pick a site above, or select one on the map.</EmptyState>;
+export function PickPrompt({ kind = "site" }: { kind?: Kind }) {
+  const t = useT();
+  return kind === "site" ? (
+    <EmptyState title={t("Choose a site")}>{t("Search for a site in the sidebar, or select one on the map.")}</EmptyState>
+  ) : (
+    <EmptyState title={t("Choose a bathing water")}>{t("Search for a bathing water in the sidebar, or select one on the map.")}</EmptyState>
+  );
 }

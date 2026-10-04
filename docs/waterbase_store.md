@@ -301,3 +301,14 @@ layout (outer ZIP with a top-level folder, inner deflate ZIPs, BOM, CRLF), `EL` 
 statuses, unit labels with a basis, lakes, a groundwater row, a site without coordinates, a quoted multi-line field. The values are
 invented for the tests and are not measurements. No test uses the network or the 4.5 GB archive; the 7-Zip streaming test is skipped
 where 7-Zip is not installed.
+
+## Plausibility bound on pH (2026-10-04)
+
+A live check of the Italian pH data showed values that cannot be pH readings. The build now drops an observed pH value
+(`EEA_3152-01-0`) outside 0 to 14 and counts it in `dropped_implausible_value` (stored in `row_counts`); the bound is
+listed in the provenance `filters` as `plausible_ranges`. Why 0 to 14: it is the extent of the pH scale for dilute
+aqueous solutions, a property of the quantity itself and not a judgement about typical river water, so no value inside
+the range is touched, however unusual. No other determinand is bounded (the project has no source for such limits).
+Source of the rule: the definition of the pH scale (no dataset value is involved). Provisional in one respect: values
+inside 0 to 14 that are still wrong (for example a unit slip) are not detected. The change takes effect only when the
+store is rebuilt; an older store keeps its old counters. Tests: `tests/unit/test_waterbase_build.py`.

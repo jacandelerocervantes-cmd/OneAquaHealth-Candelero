@@ -1,7 +1,6 @@
 "use client";
 
 import { usePlace } from "./shared";
-import { SitePicker } from "./site-picker";
 import { BathingClassesPanel, BathingSamplesPanel } from "./bathing-panels";
 import { DischargePanel, SpeciesPanel, WeatherPanel } from "./external-panels";
 import { DataQualityPanel, MeasurementsPanel, WaterQualityPanel } from "./water-panels";
@@ -18,7 +17,6 @@ export default function IndexData({ indexId }: { indexId: string }) {
   const needsSite = SITE_INDICES.has(indexId);
   return (
     <div className="space-y-4" data-testid="index-data">
-      {needsSite ? <SitePicker /> : null}
       {needsSite && !place ? <PickPrompt /> : null}
       {indexId === "water-quality" && place ? <WaterQualityPanel siteId={place.id} /> : null}
       {(indexId === "water-parameters" || indexId === "solids-turbidity" || indexId === "organic-matter") && place ? <MeasurementsPanel siteId={place.id} group={GROUP_OF[indexId]} /> : null}

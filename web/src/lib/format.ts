@@ -1,10 +1,19 @@
+import { getSettings } from "@/lib/client/settings-store";
+import { intlTag } from "@/lib/i18n-core";
+
 /** Small plain-text formatting helpers. They never produce markup. */
 
+/** Numbers follow the decimal mark of the selected language (a comma in Spanish of Spain, German, French...). */
 export function formatNumber(value: number | null | undefined, digits = 3): string {
   if (value === null || value === undefined || Number.isNaN(value)) return "n/a";
   const abs = Math.abs(value);
-  if (abs !== 0 && (abs >= 1e6 || abs < 1e-3)) return value.toExponential(2);
-  return Number(value.toFixed(digits)).toString();
+  const tag = intlTag(getSettings().language);
+  if (abs !== 0 && (abs >= 1e6 || abs < 1e-3)) return value.toExponential(2).replace(".", decimalMark(tag));
+  return Number(value.toFixed(digits)).toLocaleString(tag, { maximumFractionDigits: digits, useGrouping: false });
+}
+
+function decimalMark(tag: string): string {
+  return new Intl.NumberFormat(tag).formatToParts(1.1).find((p) => p.type === "decimal")?.value ?? ".";
 }
 
 export function formatDate(value: string | null | undefined): string {

@@ -1,20 +1,139 @@
-# OneAquaHealth
+# AquaLedger
 
-A reproducible foundation for ingesting OneAquaHealth data, running quality control, producing FHIR R4 resources, and calculating environmental indicators.
+**Ask the water. Get the data, not a verdict.**
 
-## Getting started
+AquaLedger answers plain questions about river, lake and bathing-water data of Greece, Italy and Norway, in 26 languages,
+using only real European data. Every number in an answer is checked against the data the assistant retrieved; an answer
+that fails the check is withheld, not guessed. Each answer carries its sources, licence, method and the reference values
+used.
 
-Use a Python 3.12 virtual environment outside this synchronized directory. Copy `.env.example` to `.env` and set the required variables. `uv` is optional; when it is available, verify the official inputs with:
+Built for the IEEE OneAquaHealth Global Hackathon 2026. The Python package is called `oneaquahealth` (module `oah`).
 
-```powershell
-uv run oah-verify-reference
-uv run oah-extract-ig
-uv run pytest
+- Live demo: <https://one-aqua-health-candelero.vercel.app/> (Next.js web app in front of this backend).
+- Backend: FastAPI service in `src/oah/`, deployable to Cloud Run (`docs/deployment.md`).
+- Web app: `web/` (Next.js 16, TypeScript, Tailwind; `docs/web_app.md`).
+
+## What it does and what it refuses
+
+- Reads water measurements and classifications from real sources, always labelled with their origin: **real**,
+  **externally modelled** (weather, river discharge, species records) or **synthetic**. The three are never mixed silently.
+- A read-only AI agent (Claude, Anthropic Messages API) picks the data tools; the answer is then checked: numbers and units
+  must match the tool results, the text must not contain links, markup or leaked instructions.
+- Values are compared with **reference values (screening)**, never called legal compliance. No health, potability or safety
+  verdicts: the app points to the competent authority instead.
+- Figures in answers are shown as observed ranges or with presentation rounding, never as invented precision.
+- Every request leaves a hash-chained audit record (digests only, no question text).
+
+## Data sources
+
+| Source | Content | Licence |
+| --- | --- | --- |
+| EEA Waterbase - Water Quality ICM 2026 | Annual and monthly aggregates of river and lake measurements (GR, IT, NO) | CC BY 4.0 |
+| EEA Bathing Water Directive status 2025 | Per-season classification of each bathing water (GR, IT) | CC BY 4.0 |
+| EEA bathing-water monitoring results (Discodata) | Individual E. coli and intestinal enterococci samples (GR, IT) | CC BY 4.0 |
+| HL7 Europe OneAquaHealth sandbox | Public sandbox observations and the implementation guide | see `SOURCES.yaml` |
+| Open-Meteo (ERA5, GloFAS), GBIF | Modelled weather and river discharge, species records (context only) | see `docs/external_context.md` |
+
+Provenance of every item is in `SOURCES.yaml`; formulas, provisional mappings and unvalidated values are in `docs/`
+(`unvalidated_values_register.md`, `limits_verification.md`).
+
+## Run the backend yourself
+
+You need Python 3.11 or 3.12 (not 3.13) and Git. Nothing else is required to start the API.
+
+```bash
+git clone https://github.com/jacandelerocervantes-cmd/OneAquaHealth-Candelero.git
+cd OneAquaHealth-Candelero
+
+# Create the virtual environment OUTSIDE the clone (this project forbids a .venv inside the repository).
+python -m venv ../oah-venv
+../oah-venv/bin/python -m pip install --require-hashes -r requirements-lock.txt   # Windows: ..\oah-venv\Scripts\python.exe
+../oah-venv/bin/python -m pip install --no-deps -e .
+
+../oah-venv/bin/python scripts/run_api.py
 ```
 
-`reference/` contains immutable official inputs. `data/` only documents the local-data boundary: effective cache and sandbox dumps belong in `OAH_DATA_DIR`, or in the user cache when it is unset. All application paths are resolved through `oah.paths`, so commands work from any current directory.
+Then open <http://127.0.0.1:8000/health>: it returns `{"status": "ok"}`. `requirements-lock.txt` pins every dependency
+with hashes; `docs/environment_setup.md` has the Windows commands and the rules for paths (all paths go through
+`oah.paths`, data and caches live outside the repository, in `OAH_DATA_DIR` or the user cache).
 
-See `SOURCES.yaml` for provenance and `docs/architecture.md` for layer boundaries.
+What works at this point, with no key and no downloaded data: the public-sandbox routes, indices, the quality-control
+report and the synthetic labs. Three optional steps add the rest.
+
+### 1. Real data stores (Waterbase, bathing waters, bathing samples)
+
+The three SQLite stores are built once from public downloads and live outside the repository:
+
+| Store | Command | Cost |
+| --- | --- | --- |
+| Bathing-water classification | `python scripts/build_bathing_water_store.py` | 1 to 2 minutes (`docs/bathing_water_store.md`) |
+| Bathing-water samples | `python scripts/build_bathing_samples_store.py` | about 2.5 minutes, online (`docs/bathing_samples_store.md`) |
+| EEA Waterbase | `python scripts/build_waterbase_store.py` | needs the 4.5 GB EEA archive and 7-Zip, tens of minutes (`docs/waterbase_store.md`) |
+
+Each script accepts `--dry-run` to show what it would use. Store locations can be overridden with `OAH_WATERBASE_STORE`,
+`OAH_BATHING_WATER_STORE` and `OAH_BATHING_SAMPLES_STORE` (absolute paths). A missing store is reported by the API
+(`/catalog`, `/countries`) and the matching index is simply not offered.
+
+To only check that everything starts, `python scripts/make_synthetic_stores.py --output <empty absolute dir>` builds three
+tiny stores of **invented** data (for tests and image builds; they must never be shown as real).
+
+### 2. The chat agent
+
+Set `ANTHROPIC_API_KEY` and `OAH_API_KEY` (copy `.env.example` to `.env`; `.env` is never versioned). Once `OAH_API_KEY` is
+set, every route except `/health` needs the header `X-API-Key`. The chat is spend-controlled (per-client rate limit and a
+daily cap of model calls, `OAH_CHAT_DAILY_CAP`); see `docs/chat_agent.md` and `docs/environment_variables.md`. Without
+the Anthropic key the chat answers `503` and the rest of the API works normally.
+
+### 3. Deploy
+
+`docs/deployment.md` is the runbook (Docker image with the stores baked in, Cloud Run, Secret Manager).
+`docs/predeploy_checklist.md` is the checklist.
+
+## Run the web app
+
+```bash
+cd web
+npm ci
+npm run dev          # http://localhost:3000, simulated data (a banner says so)
+```
+
+The web app never talks to Anthropic and never holds a secret in the browser. To use the real backend set, on the
+server side only, `OAH_DATA_MODE=real`, `OAH_BACKEND_URL` (the backend origin) and `OAH_API_KEY` (see `web/env.example`
+and `docs/web_app.md`).
+
+## Tests and quality checks
+
+```bash
+../oah-venv/bin/python -m pip install -e ".[dev]"
+../oah-venv/bin/python -m pytest                          # unit, contract, property, integration, portability
+../oah-venv/bin/python -m ruff check src scripts tests
+../oah-venv/bin/python -m mypy
+(cd web && npm run check)                                 # typecheck, lint, tests
+```
+
+`tests/portability/test_static_checks.py` runs ruff and mypy inside the suite. Continuous integration (`.github/workflows`)
+runs the backend suite, the web checks and a build check of the container image.
+
+## Repository map
+
+| Path | Content |
+| --- | --- |
+| `src/oah/` | the backend: `api/`, `chat/`, `waterbase/`, `bathing/`, `bathing_samples/`, `indices/`, `external/`, `i18n/`, `explain/` |
+| `web/` | the Next.js web app |
+| `docs/` | design, route reference (`api_routes.md`, `openapi.json`), data stores, security review, handoffs |
+| `scripts/` | store builders, evaluation scripts, deployment helpers |
+| `deploy/`, `Dockerfile` | Cloud Run service file and image |
+| `reference/` | read-only official inputs (see `SOURCES.yaml`) |
+| `tests/`, `fixtures/` | tests and labelled fixtures |
+
+## Known limits
+
+- This is a demo. Reference values are screening aids, not legal limits; no health or safety statement is made.
+- Machine translations of the interface and of the model's answers are checked automatically but have not been reviewed by
+  native speakers.
+- Real, modelled and synthetic data are labelled and kept apart; results on synthetic data measure the simulator, not
+  real-world performance (`oah.synthetic`).
+- Rate limits, spend caps and caches are in process memory: the service is meant to run as ONE instance.
 
 ## License and attribution
 
@@ -24,93 +143,15 @@ This project builds on official material from the IEEE OneAquaHealth Global Hack
 which is not covered by that license:
 
 - The [hl7-eu/oah](https://github.com/hl7-eu/oah) HL7 FHIR Implementation Guide and public
-  sandbox (stored read-only under `reference/oah-master.zip`) is the official hackathon
-  reference IG. Its upstream repository does not declare a license; it is used here
-  unmodified, read-only, for the hackathon's stated purpose.
+  sandbox (read-only under `reference/`, not redistributed in this repository) is the official hackathon
+  reference IG. Its upstream repository does not declare a license; it is used unmodified, read-only, for the
+  hackathon's stated purpose.
 - **"OneAquaHealth Key Indicators of Ecosystem and Biological Health — Factsheets Collection"**,
   OneAquaHealth Consortium (2026), Horizon Europe Grant Agreement 101086521.
   [doi.org/10.5281/zenodo.20345207](https://doi.org/10.5281/zenodo.20345207) — CC BY 4.0.
 - **"OneAquaHealth Field Sampling Protocols for Urban Stream Ecosystems"**,
   OneAquaHealth Consortium (2026), Horizon Europe Grant Agreement 101086521.
   [doi.org/10.5281/zenodo.20344421](https://doi.org/10.5281/zenodo.20344421) — CC BY 4.0.
+- EEA data are published under CC BY 4.0 (EEA legal notice); map tiles and data © OpenStreetMap contributors (ODbL).
 
 See `SOURCES.yaml` (`policy.third_party_notices`) for the full detail behind each entry above.
-
-## Run
-
-Create and use the external virtual environment, install `.[dev]`, and run `python -m pytest`. No `.env` is required for the public sandbox default. Run `python scripts/capture_fixtures.py` to create labeled `fixtures/real/` resources.
-
-Run `<venv>\Scripts\oah-qc-report.exe` to write JSON and Markdown reports under `<data dir>/reports/`.
-
-## Quality checks
-
-```powershell
-<venv>\Scripts\python.exe -m pytest                       # unit, contract, property, integration, portability
-<venv>\Scripts\python.exe -m ruff check src scripts tests # lint (E, F, W; rules in pyproject.toml)
-<venv>\Scripts\python.exe -m mypy                         # types (config in pyproject.toml; src, scripts, tests)
-<venv>\Scripts\python.exe -m pytest --cov --cov-report=term-missing   # coverage gate at 95 %
-```
-
-`tests/portability/test_static_checks.py` runs ruff and mypy inside the suite, so a plain `pytest` also fails on lint or type errors.
-`docs/unvalidated_values_register.md` lists every synthetic, assumed or unverified value and what real data would validate it.
-
-## Full pipeline
-
-These are the exact commands, in order, to reproduce everything from a clean checkout on
-Windows. `<venv>` is your external Python 3.12 x64 virtual environment, created outside this
-synchronized directory (see "Getting started" above).
-
-```powershell
-# 1. Install
-<venv>\Scripts\python.exe -m pip install -e ".[dev]"
-
-# 2. Verify the immutable official reference inputs and extract the Implementation Guide
-<venv>\Scripts\oah-verify-reference.exe
-<venv>\Scripts\oah-extract-ig.exe
-
-# 3. (Optional, needed only for official HL7 IG-conformance validation) build the IG with
-#    SUSHI, and have Java plus the HL7 validator jar available. If any of these is missing,
-#    the pipeline still runs; it explicitly reports that one stage as skipped and says why.
-<venv>\Scripts\python.exe scripts\build_ig.py
-
-# 4. Run the full test suite
-<venv>\Scripts\python.exe -m pytest
-
-# 5. Run the one-command end-to-end pipeline: sandbox snapshot -> QC -> FHIR structural
-#    validation -> FHIR export with Provenance -> indices -> synthetic risk demo. Every
-#    output is written under the configured data directory, never inside this repository.
-<venv>\Scripts\python.exe scripts\run_pipeline.py
-
-# 6. Start the local demo API (serves the same pipeline stages as read/query endpoints)
-<venv>\Scripts\python.exe scripts\run_api.py
-```
-
-With the API running, `GET http://127.0.0.1:8000/health` should return `{"status": "ok"}`.
-See `docs/architecture.md` for the full endpoint table; every response is labeled with its
-data origin (`"real-sandbox"` or `"synthetic"`).
-
-### Optional environment variables
-
-None of these are required for `/health` or for the test suite. `.env` (copied from
-`.env.example`, not versioned) is the recommended place to set them; see `oah.config.Settings`
-for the authoritative list and defaults.
-
-| Variable | Purpose | Default |
-| --- | --- | --- |
-| `ANTHROPIC_API_KEY` | Required only for the two `/explain/*` endpoints and `scripts/eval_explain.py`. Without it, those endpoints return `503` with a clear message; everything else works normally. | unset |
-| `OAH_LLM_MODEL` | Overrides the Claude model used by `/explain/*`. | `claude-sonnet-5-5` |
-| `OAH_ENABLE_DOCS` | Set to `1` to serve the interactive API docs and the OpenAPI schema (`/docs`, `/redoc`, `/openapi.json`). Off by default: they are unauthenticated and list every route. Local development only. | unset (off) |
-| `OAH_LIMITS_FILE` | Absolute path (outside the repository) of a JSON file that replaces or adds limits, location countries and location regimes without editing code. Validated strictly, re-read when it changes, and labelled `override:` in every output. Format and example: `docs/limits_override.example.json`. | unset (shipped limits) |
-| `OAH_TRUSTED_PROXIES` | Comma-separated IP addresses of reverse proxies whose `X-Forwarded-For` and `X-Forwarded-Proto` headers are believed. Needed for per-client rate limits and HSTS behind a proxy; from any other peer those headers are ignored. | unset (none) |
-| `OAH_API_KEY` | Once set, every route except `/health` requires a matching `X-API-Key` header. Unset by default for local/dev convenience; set this before exposing the API beyond localhost. | unset (open) |
-| `OAH_CORS_ORIGINS` | Comma-separated list of origins allowed to call the API from a browser (e.g. a future frontend's dev server). | `http://localhost:3000, http://127.0.0.1:3000, http://localhost:5173, http://127.0.0.1:5173` |
-| `OAH_EXPLAIN_RATE_LIMIT_PER_MINUTE`, `OAH_EXPLAIN_DAILY_CAP`, `OAH_EXPLAIN_CACHE_TTL_SECONDS` | Spend controls for the paid `/explain/*` calls: a per-host requests-per-minute budget, a rolling 24-hour cap on real model calls for the whole process (a restart resets it), and how long an identical answer is reused. Cached answers cost nothing. With a small API budget lower the daily cap. | `5`, `100`, `600` |
-| `OAH_RATE_LIMIT_MAX_REQUESTS`, `OAH_RATE_LIMIT_WINDOW_SECONDS` | Per-client-host request budget enforced on every route except `/health`. Single-process only; see `docs/architecture.md`. | `60` requests / `60` seconds |
-
-## Synthetic data
-
-`oah.synthetic` creates explicitly labeled, seeded citizen-science macroinvertebrate campaigns
-for developing observer-reliability, conformal-prediction, and human-review components. It uses
-real Location identifiers only as labels and never reads or copies real Location data. Synthetic
-records cannot be mixed with real sandbox records, and results on them measure the simulator—not
-real ecological or operational performance.

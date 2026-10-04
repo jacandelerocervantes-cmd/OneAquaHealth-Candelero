@@ -8,6 +8,10 @@ data/dumps/
 out/
 node_modules/
 stack-ia-dev/
+# Local assistant configuration: launch.json holds a personal path, agents/ and commands/ are copies of private tooling.
+# Only the guardrail settings (with the hooks/ they call) are shared.
+.claude/*
+!.claude/settings.json
 __pycache__/
 *.py[cod]
 .pytest_cache/

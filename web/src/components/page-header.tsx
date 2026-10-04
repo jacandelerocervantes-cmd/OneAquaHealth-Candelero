@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { useApp } from "@/lib/client/app-context";
 import { downloadJson } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 
 function MapIcon() {
   return (
@@ -27,11 +28,12 @@ function DownloadIcon() {
  */
 export default function PageHeader({ title, about }: { title: string; about?: ReactNode }) {
   const app = useApp();
+  const t = useT();
   const [aboutOpen, setAboutOpen] = useState(false);
   return (
     <header className="border-b border-line bg-canvas">
       <div className="flex items-center gap-2 px-4 py-2">
-        <button type="button" aria-label="Open menu" onClick={() => app.setSidebarOpen(true)} className="rounded-lg p-2 hover:bg-sidebar md:hidden">
+        <button type="button" aria-label={t("Open menu")} onClick={() => app.setSidebarOpen(true)} className="rounded-lg p-2 hover:bg-sidebar md:hidden">
           <span aria-hidden>☰</span>
         </button>
         <h1 className="min-w-0 flex-1 truncate text-lg font-semibold" data-testid="page-title">{title}</h1>
@@ -43,14 +45,14 @@ export default function PageHeader({ title, about }: { title: string; about?: Re
             onClick={() => setAboutOpen((v) => !v)}
             className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm hover:bg-sidebar"
           >
-            <span className="max-sm:sr-only">About this index</span>
+            <span className="max-sm:sr-only">{t("About this index")}</span>
             <span aria-hidden>{aboutOpen ? "▴" : "▾"}</span>
           </button>
         ) : null}
         <button
           type="button"
-          aria-label="Download the data behind the answer"
-          title="Download the data behind the answer"
+          aria-label={t("Download the data behind the answer")}
+          title={t("Download the data behind the answer")}
           disabled={!app.exportPayload}
           onClick={() => app.exportPayload && downloadJson(app.exportPayload.filename, app.exportPayload.data)}
           className="rounded-lg p-2 hover:bg-sidebar disabled:opacity-40"
@@ -59,7 +61,7 @@ export default function PageHeader({ title, about }: { title: string; about?: Re
         </button>
         <button
           type="button"
-          aria-label={app.mapOpen ? "Close map" : "Open map"}
+          aria-label={app.mapOpen ? t("Close map") : t("Open map")}
           aria-pressed={app.mapOpen}
           data-testid="map-toggle"
           onClick={() => app.setMapOpen(!app.mapOpen)}
