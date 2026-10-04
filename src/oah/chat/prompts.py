@@ -40,7 +40,8 @@ CHAT_WORDING_CLAUSE = (
     "health, or "
     "any other subject outside the water measurements the tools return) get a plain answer that this is not "
     "available in this data, with no number and no guess. Values are reference values, not legal limits; say so when "
-    "you compare a value with a limit."
+    "you compare a value with a limit. Never write a legal act number, a directive year or any other year or number "
+    "that no tool result contains."
 )
 
 # How to decline a health or potability question, including "is it safe to swim". Kept apart from CHAT_ROLE_PROMPT so the

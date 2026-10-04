@@ -6054,3 +6054,25 @@ Source: `src/oah/bathing_samples/storage.py`, `build.py`, `constants.py`, `store
 ### Files touched
 
 - `web/src/components/answer.tsx`, `web/src/components/app-shell.tsx`, `web/tests/shell.test.tsx`, `docs/handoff/LEDGER.md`.
+
+## 2026-10-04 -- Agent: Claude -- Live chat false positive, AquaLedger palette, chat-only index view, expandable map
+
+### Done
+
+- First live web chat question ("Which water-quality information is available for this country?") was withheld with `contains-url` and "Ungrounded number: 2006". Cause of the first flag: `_URL` in `src/oah/explain/safety.py` matched a scheme word followed by a space ("Available data: ..."). The scheme now needs text right after the colon (`[^\s]+`); real links (`https://`, `data:text/html`, `file://`, `www.`) are still flagged. New tests in `tests/unit/test_explain_safety.py`. The "2006" comes from the data facts in the chat prompt (Directive 2006/7/EC): `CHAT_WORDING_CLAUSE` now forbids legal act numbers and years that no tool result contains (not leak-checked, so a correct answer is not withheld). Full Python suite: 3373 passed, 1 skipped, 1 xfailed.
+- Web palette (`web/src/app/globals.css`): ice-white canvas, marine ink, deeper accent, new `verified` amber tokens (light and dark). `Disclosure` takes `verified`; "Sources and method" uses it. Layout unchanged.
+- Index pages are one chat view: the Ask/Data tabs are gone and the index data renders under the answers (`ChatView` prop `below`).
+- Map pane: Expand/Shrink button (desktop only; on mobile the pane is already full screen); the Leaflet canvas is re-measured when the size changes.
+- `web/tests/security.test.ts` now normalises path separators (three tests failed on Windows only). `web/tests/pages.test.tsx` updated; new `web/tests/map-expand.test.tsx`. Web check run outside the repository: typecheck, lint and build clean, 133 tests passed.
+
+### Not done (needs the maintainer or other access)
+
+- Commit and push of these changes (maintainer); redeploy of the backend image so the URL-filter fix and the prompt clause reach Cloud Run (image rebuild and `gcloud run deploy`); a visual check of the new palette and the expanded map in a browser; live chat questions 5 to 14.
+
+### Files touched
+
+- `src/oah/explain/safety.py`, `src/oah/chat/prompts.py`, `tests/unit/test_explain_safety.py`, `web/src/app/globals.css`, `web/src/components/{ui,answer,chat,index-view,map-pane,app-shell}.tsx`, `web/tests/{pages.test.tsx,security.test.ts,map-expand.test.tsx}`, `docs/handoff/LEDGER.md`.
+
+### Next step
+
+- Maintainer: commit and push (Vercel redeploys the web by itself); then rebuild the backend image and redeploy so the chat fix is live.

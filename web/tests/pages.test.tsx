@@ -122,17 +122,18 @@ describe("index data panels", () => {
 });
 
 describe("IndexView", () => {
-  it("shows the title, the About panel and the Ask/Data tabs", async () => {
+  it("is a single chat view with the data of the index under the answers, and no tabs", async () => {
     installProxyFetch();
     renderWithApp(<IndexView indexId="bathing-samples" />);
     expect(await screen.findByTestId("page-title")).toHaveTextContent("E. coli and enterococci");
-    expect(screen.getByRole("tab", { name: "Ask" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("tab")).toBeNull();
+    expect(screen.getByTestId("conversation")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /About this index/ }));
     const about = screen.getByTestId("about-index");
     expect(about).toHaveTextContent("Greece");
     expect(about).toHaveTextContent("Real · EEA bathing samples");
-    await userEvent.click(screen.getByRole("tab", { name: "Data" }));
-    expect(await screen.findByTestId("bw-select")).toBeInTheDocument();
+    const below = await screen.findByTestId("below-answers");
+    expect(await within(below).findByTestId("bw-select")).toBeInTheDocument();
   });
 
   it("explains an index that does not apply to the country instead of showing it empty", async () => {
@@ -163,8 +164,7 @@ describe("IndexView", () => {
     await userEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-pressed", "false");
     const download = screen.getByRole("button", { name: "Download the data behind the answer" });
-    expect(download).toBeDisabled();
-    await userEvent.click(screen.getByRole("tab", { name: "Data" }));
+    // The data of the index loads under the answers together with the chat, so the button is enabled once it is there.
     await screen.findByRole("table", { name: "Findings" });
     await waitFor(() => expect(download).toBeEnabled());
   });

@@ -130,15 +130,18 @@ export function Disclosure({
   children,
   defaultOpen = false,
   testId,
+  verified = false,
 }: {
   title: string;
   children: ReactNode;
   defaultOpen?: boolean;
   testId?: string;
+  /** Amber marker used for the "Sources and method" block: the answer carries its evidence. */
+  verified?: boolean;
 }) {
   return (
-    <details open={defaultOpen} data-testid={testId} className="group rounded-lg border border-line bg-surface">
-      <summary className="cursor-pointer select-none px-3 py-2 text-sm font-medium">{title}</summary>
+    <details open={defaultOpen} data-testid={testId} className={`group rounded-lg border bg-surface ${verified ? "border-verified-line" : "border-line"}`}>
+      <summary className={`cursor-pointer select-none px-3 py-2 text-sm font-medium ${verified ? "rounded-t-lg bg-verified-bg text-verified-ink" : ""}`}>{title}</summary>
       <div className="space-y-2 border-t border-line px-3 py-3 text-sm">{children}</div>
     </details>
   );

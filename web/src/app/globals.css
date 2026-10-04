@@ -2,13 +2,13 @@
 
 /* Design tokens: one set of colours, redefined for dark mode. */
 :root {
-  --canvas: #faf9f6;
+  --canvas: #f4fafb;
   --surface: #ffffff;
-  --sidebar: #f1efe9;
-  --ink: #1f2933;
-  --muted: #5b6672;
-  --line: #ddd9cf;
-  --accent: #0b6e8a;
+  --sidebar: #e8f2f5;
+  --ink: #0b2f45;
+  --muted: #4a6678;
+  --line: #d3e2e7;
+  --accent: #0b5f86;
   --accent-ink: #ffffff;
   --warn-bg: #fff4d6;
   --warn-ink: #6b4a00;
@@ -18,16 +18,19 @@
   --ok-ink: #14532d;
   --mock-bg: #ede7fb;
   --mock-ink: #4c2a9a;
+  --verified-bg: #fdf1de;
+  --verified-ink: #7a4a05;
+  --verified-line: #f2a33a;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --canvas: #15191d;
-    --surface: #1d2227;
-    --sidebar: #1a1e22;
-    --ink: #e7ebef;
-    --muted: #9aa5b1;
-    --line: #333b43;
+    --canvas: #0c1a24;
+    --surface: #10222e;
+    --sidebar: #0e1e29;
+    --ink: #e4eef3;
+    --muted: #93a9b6;
+    --line: #25394a;
     --accent: #5cc3df;
     --accent-ink: #06222b;
     --warn-bg: #3a2f10;
@@ -38,6 +41,9 @@
     --ok-ink: #a7e3bd;
     --mock-bg: #2a2147;
     --mock-ink: #cdbcff;
+    --verified-bg: #3a2a10;
+    --verified-ink: #f7d9a6;
+    --verified-line: #f2a33a;
   }
 }
 
@@ -58,6 +64,9 @@
   --color-ok-ink: var(--ok-ink);
   --color-mock-bg: var(--mock-bg);
   --color-mock-ink: var(--mock-ink);
+  --color-verified-bg: var(--verified-bg);
+  --color-verified-ink: var(--verified-ink);
+  --color-verified-line: var(--verified-line);
 }
 
 html,

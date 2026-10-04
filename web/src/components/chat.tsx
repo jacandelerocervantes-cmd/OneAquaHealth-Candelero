@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import type { ChatIndex, ChatRequest, LanguagesResponse } from "@/lib/api";
 import { ApiError, apiChat, deadlineFrom, describeError } from "@/lib/client/api";
 import { useApp, type ChatMessage, type ErrorMessage } from "@/lib/client/app-context";
@@ -36,9 +36,11 @@ interface Props {
   country: string;
   chatIndex: ChatIndex | null;
   indexId: string | null;
+  /** Rendered at the end of the conversation, under the answers (the data of the index). */
+  below?: ReactNode;
 }
 
-export function ChatView({ chatKey, country, chatIndex, indexId }: Props) {
+export function ChatView({ chatKey, country, chatIndex, indexId, below }: Props) {
   const app = useApp();
   const settings = useSettings();
   const languages = useApi<LanguagesResponse>("/languages");
@@ -199,6 +201,7 @@ export function ChatView({ chatKey, country, chatIndex, indexId }: Props) {
             </div>
           ) : null}
           <div ref={bottom} />
+          {below ? <div data-testid="below-answers" className="mt-4 border-t border-line pt-6">{below}</div> : null}
         </div>
       </div>
 

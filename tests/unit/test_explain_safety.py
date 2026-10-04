@@ -256,6 +256,19 @@ def test_a_correctly_formatted_assess_answer_and_ordinary_maths_are_not_flagged(
     assert guard_output("Anything goes here.", "describe", INSTRUCTIONS) == ()
 
 
+@pytest.mark.parametrize(
+    "text",
+    ["Available data: water chemistry and bathing classes.", "Data:\n- Greece\n- Italy", "Check the file: none found."],
+)
+def test_a_scheme_word_followed_by_a_space_is_prose_not_a_url(text):
+    assert "contains-url" not in guard_output(text, "describe", INSTRUCTIONS)
+
+
+@pytest.mark.parametrize("text", ["data:text/html;base64,AAAA", "see https://x.org", "file:///etc/passwd", "www.example.org"])
+def test_real_links_are_still_flagged_as_urls(text):
+    assert "contains-url" in guard_output(text, "describe", INSTRUCTIONS)
+
+
 def test_oversized_evidence_is_refused_before_any_model_call():
     client = _Client()
     with pytest.raises(ValueError):

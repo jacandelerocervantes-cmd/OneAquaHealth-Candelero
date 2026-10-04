@@ -33,6 +33,7 @@ function Shell({ children }: { children: ReactNode }) {
   const app = useApp();
   const mode = useDataMode();
   const { sidebarOpen, mapOpen, setSidebarOpen, setMapOpen } = app;
+  const [mapWide, setMapWide] = useState(false);
 
   // Escape closes the mobile menu first, then the map pane.
   useEffect(() => {
@@ -71,8 +72,8 @@ function Shell({ children }: { children: ReactNode }) {
       </main>
 
       {app.mapOpen ? (
-        <div className="fixed inset-0 z-30 md:static md:inset-auto md:z-auto md:w-[26rem] md:shrink-0">
-          <MapPane />
+        <div className={`fixed inset-0 z-30 md:static md:inset-auto md:z-auto md:shrink-0 ${mapWide ? "md:w-[min(56rem,60vw)]" : "md:w-[26rem]"}`}>
+          <MapPane expanded={mapWide} onToggleExpanded={() => setMapWide((w) => !w)} />
         </div>
       ) : null}
     </div>

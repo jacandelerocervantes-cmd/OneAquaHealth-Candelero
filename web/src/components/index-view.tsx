@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import type { CatalogIndex, CatalogResponse } from "@/lib/api";
 import { chatKey } from "@/lib/client/app-context";
 import { useSettings } from "@/lib/client/settings-store";
@@ -29,12 +28,9 @@ export function AboutIndex({ index, catalog }: { index: CatalogIndex; catalog: C
   );
 }
 
-type Tab = "ask" | "data";
-
 export default function IndexView({ indexId }: { indexId: string }) {
   const settings = useSettings();
   const catalog = useApi<CatalogResponse>("/catalog", { country: settings.country });
-  const [tab, setTab] = useState<Tab>("ask");
 
   return (
     <Async state={catalog}>
@@ -61,33 +57,13 @@ export default function IndexView({ indexId }: { indexId: string }) {
         return (
           <>
             <PageHeader title={index.title} about={<AboutIndex index={index} catalog={c} />} />
-            <div role="tablist" aria-label="View" className="flex gap-1 border-b border-line px-4">
-              {(["ask", "data"] as const).map((t) => (
-                <button
-                  key={t}
-                  role="tab"
-                  type="button"
-                  id={`tab-${t}`}
-                  aria-selected={tab === t}
-                  aria-controls={`panel-${t}`}
-                  onClick={() => setTab(t)}
-                  className={`border-b-2 px-3 py-2 text-sm ${tab === t ? "border-accent font-medium" : "border-transparent text-muted"}`}
-                >
-                  {t === "ask" ? "Ask" : "Data"}
-                </button>
-              ))}
-            </div>
-            {tab === "ask" ? (
-              <div role="tabpanel" id="panel-ask" aria-labelledby="tab-ask" className="flex min-h-0 flex-1 flex-col">
-                <ChatView chatKey={chatKey(settings.country, index.id)} country={settings.country} chatIndex={index.chat_index ?? null} indexId={index.id} />
-              </div>
-            ) : (
-              <div role="tabpanel" id="panel-data" aria-labelledby="tab-data" className="min-h-0 flex-1 overflow-y-auto">
-                <div className="mx-auto max-w-4xl px-4 py-6">
-                  <IndexData indexId={index.id} />
-                </div>
-              </div>
-            )}
+            <ChatView
+              chatKey={chatKey(settings.country, index.id)}
+              country={settings.country}
+              chatIndex={index.chat_index ?? null}
+              indexId={index.id}
+              below={<IndexData indexId={index.id} />}
+            />
           </>
         );
       }}

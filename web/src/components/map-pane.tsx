@@ -77,7 +77,7 @@ function PlaceList({ places, selectedId, onPick }: { places: MapPlace[]; selecte
   );
 }
 
-function LeafletCanvas({ places, selectedId, onPick }: { places: MapPlace[]; selectedId: string | null; onPick: (p: MapPlace) => void }) {
+function LeafletCanvas({ places, selectedId, onPick, tall }: { places: MapPlace[]; selectedId: string | null; onPick: (p: MapPlace) => void; tall: boolean }) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const layerRef = useRef<LayerGroup | null>(null);
@@ -136,10 +136,27 @@ function LeafletCanvas({ places, selectedId, onPick }: { places: MapPlace[]; sel
 
   useEffect(redraw, [places, selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return <div ref={container} data-testid="map-canvas" role="application" aria-label="Map of places" className="h-64 w-full rounded-lg border border-line" />;
+  // The pane can be widened or made taller: Leaflet must re-measure its container, then fit the places again.
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      mapRef.current?.invalidateSize();
+      redraw();
+    }, 50);
+    return () => window.clearTimeout(t);
+  }, [tall]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div
+      ref={container}
+      data-testid="map-canvas"
+      role="application"
+      aria-label="Map of places"
+      className={`w-full rounded-lg border border-line ${tall ? "h-[60vh] min-h-72" : "h-64"}`}
+    />
+  );
 }
 
-export default function MapPane() {
+export default function MapPane({ expanded = false, onToggleExpanded }: { expanded?: boolean; onToggleExpanded?: () => void }) {
   const app = useApp();
   const pathname = usePathname();
   const settings = useSettings();
@@ -161,9 +178,22 @@ export default function MapPane() {
     <aside data-testid="map-pane" aria-label="Map" className="flex h-full w-full flex-col gap-3 overflow-y-auto border-l border-line bg-canvas p-3">
       <div className="flex items-center justify-between">
         <h2 className="font-medium">Map</h2>
-        <button type="button" onClick={() => app.setMapOpen(false)} className="rounded-md border border-line px-2 py-1 text-sm hover:bg-sidebar" aria-label="Close map">
-          Close
-        </button>
+        <div className="flex items-center gap-2">
+          {onToggleExpanded ? (
+            <button
+              type="button"
+              data-testid="map-expand"
+              onClick={onToggleExpanded}
+              aria-pressed={expanded}
+              className="hidden rounded-md border border-line px-2 py-1 text-sm hover:bg-sidebar md:inline-block"
+            >
+              {expanded ? "Shrink" : "Expand"}
+            </button>
+          ) : null}
+          <button type="button" onClick={() => app.setMapOpen(false)} className="rounded-md border border-line px-2 py-1 text-sm hover:bg-sidebar" aria-label="Close map">
+            Close
+          </button>
+        </div>
       </div>
       <p className="text-xs text-muted">{bathing ? "Bathing waters" : "Sites"} of the selected country. Selecting one does not start a question.</p>
       {state.status === "loading" ? <Loading /> : null}
@@ -171,7 +201,7 @@ export default function MapPane() {
       {state.status === "ready" && places.length === 0 ? <EmptyState title="No places to show">This country has no located places for this index.</EmptyState> : null}
       {state.status === "ready" && places.length > 0 ? (
         <>
-          <LeafletCanvas places={places} selectedId={selectedId} onPick={pick} />
+          <LeafletCanvas places={places} selectedId={selectedId} onPick={pick} tall={expanded} />
           <PlaceList places={places} selectedId={selectedId} onPick={pick} />
         </>
       ) : null}

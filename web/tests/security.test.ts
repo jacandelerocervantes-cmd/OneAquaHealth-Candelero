@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildCsp, OSM_TILE_HOST, securityHeaders } from "@/lib/csp";
 import { DEFAULT_SETTINGS, sanitiseSettings } from "@/lib/client/settings-store";
@@ -9,7 +9,8 @@ import type { Schema, SitesResponse } from "@/lib/api";
 
 function sources(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name);
+    // Forward slashes on every platform: the checks below match path fragments such as "lib/server".
+    const path = join(dir, name).split(sep).join("/");
     if (statSync(path).isDirectory()) return sources(path);
     return /\.(ts|tsx|css|mjs)$/.test(name) ? [path] : [];
   });
@@ -31,7 +32,7 @@ describe("the browser never holds a secret and renders only plain text", () => {
 
   it("reads the backend URL and key only in the server configuration module", () => {
     const readers = SRC.filter((p) => /OAH_API_KEY|OAH_BACKEND_URL/.test(read(p)));
-    expect(readers.map((p) => relative("src", p))).toEqual(["lib/server/config.ts"]);
+    expect(readers.map((p) => p.replace(/^src\//, ""))).toEqual(["lib/server/config.ts"]);
   });
 
   it("exposes no NEXT_PUBLIC_ variable and never ships the key header from client code", () => {

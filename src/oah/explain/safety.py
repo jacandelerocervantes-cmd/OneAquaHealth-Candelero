@@ -34,7 +34,10 @@ MAX_OUTPUT_CHARS = 3_000
 REMOVED = "[removed: instruction-like text]"
 URL_REMOVED = "[url removed]"
 
-_URL = re.compile(r"(?i)\b(?:https?|ftp|file|data|javascript):[^\s]*|\bwww\.[^\s]+")
+# A scheme counts only when text follows the colon directly ("data:text/html", "https://x"): the plain words "data:" or
+# "file:" before a space ("Available data: water chemistry") are ordinary prose, not a link (found in the first live
+# web chat run, 2026-10-04, where it withheld a correct answer).
+_URL = re.compile(r"(?i)\b(?:https?|ftp|file|data|javascript):[^\s]+|\bwww\.[^\s]+")
 _INSTRUCTION = re.compile(
     r"(?is)"
     r"\b(?:ignore|disregard|forget|override|bypass)\b[^.\n]{0,60}\b(?:previous|prior|above|earlier|all|any|the|these|your)\b[^.\n]{0,30}\b(?:instruction|prompt|rule|message|context|guideline)s?\b"

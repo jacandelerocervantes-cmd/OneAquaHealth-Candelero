@@ -111,7 +111,7 @@ export function SourcesAndMethod({ response }: { response: ChatResponse }) {
     ...response.ungrounded_numbers.map((n) => `Ungrounded number: ${n}`),
   ];
   return (
-    <Disclosure title="Sources and method" testId="sources-and-method">
+    <Disclosure title="Sources and method" testId="sources-and-method" verified>
       <section aria-label="Data source and licence">
         <h3 className="mb-1 font-medium">Data source and licence</h3>
         <ul className="list-disc space-y-0.5 pl-5">
