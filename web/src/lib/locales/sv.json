@@ -179,7 +179,6 @@
   "Page not found": "Sidan hittades inte",
   "Parameter": "Parameter",
   "Period": "Period",
-  "Place": "Plats",
   "Places": "Platser",
   "Places could not be loaded.": "Platserna kunde inte laddas.",
   "Poor": "Dålig",
@@ -219,10 +218,10 @@
   "Sandbox observations are shown as real sandbox data; reference values are screening aids, not legal limits.": "Observationer från sandbox visas som verkliga sandbox-data; referensvärden är hjälpmedel för översiktlig bedömning, inte lagliga gränsvärden.",
   "Screening against reference values, not legal compliance. No health or safety verdicts. AI answers are generated from tool results and are not verified.": "Översiktlig jämförelse med referensvärden, inte laglig efterlevnad. Inga hälso- eller säkerhetsutlåtanden. AI-svar genereras utifrån verktygsresultat och är inte verifierade.",
   "Search by name": "Sök efter namn",
-  "Search for a bathing water in the sidebar, or select one on the map.": "Sök efter ett badvatten i sidofältet eller välj ett på kartan.",
   "Search for a site in the sidebar, or select one on the map.": "Sök efter en plats i sidofältet eller välj en på kartan.",
   "Seasons": "Säsonger",
   "Seed": "Frö",
+  "Select a bathing water on the map.": "Välj ett badvatten på kartan.",
   "Send": "Skicka",
   "Served from cache": "Hämtat från cache",
   "Settings": "Inställningar",
@@ -304,6 +303,6 @@
   "Year": "År",
   "yes": "ja",
   "You can send again in {n} s.": "Du kan skicka igen om {n} s.",
-  "You can send again now.": "Du kan skicka igen nu."  ,
+  "You can send again now.": "Du kan skicka igen nu.",
   "Your question": "Din fråga"
 }

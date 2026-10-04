@@ -22,8 +22,11 @@ export function mapKinds(pathname: string): PlaceKind[] {
   return isBathingIndex(indexId) ? ["bathing-water"] : ["site"];
 }
 
-/** Kinds the sidebar finder searches: the map's, except on screens where no place can be picked (labs, settings). */
+/**
+ * Kinds the sidebar finder searches: sites only (a simple name search). Bathing waters are picked on the map, so the
+ * finder is hidden in the bathing indices and where no place can be picked (labs, settings).
+ */
 export function finderKinds(pathname: string): PlaceKind[] {
   if (pathname.startsWith("/labs/") || pathname.startsWith("/settings")) return [];
-  return mapKinds(pathname);
+  return isBathingIndex(indexIdFromPath(pathname)) ? [] : ["site"];
 }

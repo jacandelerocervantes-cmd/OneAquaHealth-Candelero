@@ -6099,3 +6099,21 @@ Source: `src/oah/bathing_samples/storage.py`, `build.py`, `constants.py`, `store
 ### Next step
 
 - Maintainer: `git status`, then commit and push the pending changes; open the live web once in es-MX and in English.
+
+## 2026-10-04 -- Agent: Claude -- Sidebar site search as a search box with suggestions; default language English; .claude not published
+
+### Done
+
+- The sidebar place finder is now a simple SITE search with suggestions (`web/src/components/place-finder.tsx`): nothing is listed until something is typed, then at most five suggestions open over the menu in a list that never scrolls, with the typed part emphasised; arrow keys, Enter and Escape work (ARIA combobox and listbox); one request per pause in typing (150 ms). Sites only: bathing waters are picked on the map, and the finder is hidden in the bathing indices, in the labs and in the settings (`finderKinds` in `web/src/lib/places.ts`). The earlier version (a scrolling list of sites and bathing waters) was replaced at the maintainer's request after a mock-up was approved. Verified in a browser (suggestions, keyboard pick, context chip in the chat).
+- Interface texts: one new text ("Select a bathing water on the map.") and two removed; 306 texts in the 25 dictionary files of `web/src/lib/locales/`; `npm run i18n` passes.
+- The default interface language is English (`DEFAULT_LANGUAGE`, maintainer's decision); a visitor's own choice is kept in the browser.
+- `.claude/` is ignored entirely (`.gitignore`). `tests/unit/test_guard_hooks.py` now reads the published `hooks/settings.example.json` (a copy of the hook wiring) and checks the local `.claude/settings.json` against it when that file exists. Hook, portability and deploy-file tests pass. The maintainer must run `git rm --cached .claude/settings.json` once so the file stops being published; its copy stays on disk and the hooks stay active locally. Older commits still contain `.claude/settings.json` (no secrets); a second history rewrite (same procedure as before, with the whole `.claude` path) would remove it.
+- Web checks outside the repository: typecheck, lint, i18n check, 153 tests and build, all green.
+
+### Not done (needs the maintainer or other access)
+
+- Commit and push of all pending web, documentation and test changes; live chat questions 5 to 14; human review of the translations; Devpost text and video.
+
+### Files touched
+
+- `web/src/components/place-finder.tsx`, `web/src/lib/places.ts`, `web/src/components/index-data/shared.tsx`, the 25 dictionary files and `_keys.json` of `web/src/lib/locales/`, `web/tests/place-finder.test.tsx`, `web/tests/i18n.test.tsx`, `web/tests/chat.test.tsx`, `web/src/lib/constants.ts`, `.gitignore`, `hooks/settings.example.json`, `tests/unit/test_guard_hooks.py`, `docs/web_app.md`, `docs/web_app_i18n.md`, `docs/handoff/LEDGER.md`.

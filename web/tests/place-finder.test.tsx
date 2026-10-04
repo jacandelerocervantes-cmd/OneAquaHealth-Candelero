@@ -17,7 +17,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("which places a screen is about", () => {
-  it("the home page is about everything, an index about its own places", () => {
+  it("the map shows everything on the home page and an index's own places inside an index", () => {
     expect(mapKinds("/")).toEqual(["site", "bathing-water"]);
     expect(mapKinds("/i/water-parameters")).toEqual(["site"]);
     expect(mapKinds("/i/data-quality")).toEqual(["site"]);
@@ -26,58 +26,97 @@ describe("which places a screen is about", () => {
     expect(mapKinds("/labs/river-risk")).toEqual(["site"]);
   });
 
-  it("the finder is hidden where no place can be picked", () => {
+  it("the sidebar search is for sites only and is hidden where it cannot apply", () => {
+    expect(finderKinds("/")).toEqual(["site"]);
+    expect(finderKinds("/i/weather")).toEqual(["site"]);
+    expect(finderKinds("/i/bathing-classes")).toEqual([]);
+    expect(finderKinds("/i/bathing-samples")).toEqual([]);
     expect(finderKinds("/labs/citizen-science")).toEqual([]);
     expect(finderKinds("/settings")).toEqual([]);
-    expect(finderKinds("/i/weather")).toEqual(["site"]);
     expect(indexIdFromPath("/i/weather")).toBe("weather");
     expect(indexIdFromPath("/")).toBeNull();
   });
 });
 
-describe("sidebar place finder", () => {
-  it("on the home page it finds sites and bathing waters together", async () => {
-    installProxyFetch();
+describe("sidebar site search with suggestions", () => {
+  it("lists nothing until something is typed, then suggests sites only", async () => {
+    const { calls } = installProxyFetch();
     renderWithApp(<PlaceFinder />);
-    const list = await screen.findByRole("list", { name: "Places" });
-    expect(within(list).getByRole("button", { name: /Mock River Alpha/ })).toBeInTheDocument();
-    expect(within(list).getByRole("button", { name: /Mock Beach Aegean/ })).toBeInTheDocument();
-    expect(screen.getByLabelText("Place")).toBeInTheDocument();
+    const box = screen.getByRole("combobox", { name: "Site" });
+    expect(box).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("listbox")).toBeNull();
+    expect(calls.some((c) => c.url.includes("/sites"))).toBe(false);
+    await userEvent.type(box, "Mock");
+    const list = await screen.findByRole("listbox", { name: "Places" });
+    expect(box).toHaveAttribute("aria-expanded", "true");
+    expect(within(list).getByRole("option", { name: /Mock River Alpha/ })).toBeInTheDocument();
+    expect(within(list).queryByText(/Beach/)).toBeNull();
+    expect(calls.some((c) => c.url.includes("/bathing-waters"))).toBe(false);
   });
 
-  it("inside an index it lists only the places of that index", async () => {
-    pathname = "/i/bathing-samples";
+  it("emphasises what was typed inside each suggestion", async () => {
     installProxyFetch();
     renderWithApp(<PlaceFinder />);
-    const list = await screen.findByRole("list", { name: "Places" });
-    expect(within(list).getByRole("button", { name: /Mock Beach Aegean/ })).toBeInTheDocument();
-    expect(within(list).queryByRole("button", { name: /Mock River Alpha/ })).toBeNull();
-    expect(screen.getByLabelText("Bathing water")).toBeInTheDocument();
+    await userEvent.type(screen.getByRole("combobox", { name: "Site" }), "river a");
+    const option = await screen.findByRole("option", { name: /Mock River Alpha/ });
+    const bold = option.querySelector("b");
+    expect(bold?.textContent).toBe("River A");
   });
 
-  it("searches by name and says so when nothing matches", async () => {
-    pathname = "/i/weather";
+  it("shows at most five suggestions in a list that never scrolls, and asks for five", async () => {
+    const { calls } = installProxyFetch();
+    renderWithApp(<PlaceFinder />);
+    await userEvent.type(screen.getByRole("combobox", { name: "Site" }), "Mock");
+    const list = await screen.findByRole("listbox", { name: "Places" });
+    expect(within(list).getAllByRole("option").length).toBeLessThanOrEqual(5);
+    expect(screen.getByTestId("place-suggestions").className).not.toMatch(/overflow-y|max-h/);
+    expect(calls.some((c) => c.url.includes("limit=5"))).toBe(true);
+  });
+
+  it("says so when nothing matches", async () => {
     installProxyFetch();
     renderWithApp(<PlaceFinder />);
-    await screen.findByRole("list", { name: "Places" });
-    await userEvent.type(screen.getByLabelText("Site"), "zzzz");
+    await userEvent.type(screen.getByRole("combobox", { name: "Site" }), "zzzz");
     expect(await screen.findByTestId("no-places")).toBeInTheDocument();
   });
 
-  it("picking a place shows it under the search box and Clear removes it", async () => {
+  it("works with the keyboard: arrows move, Enter picks, Escape closes", async () => {
+    installProxyFetch();
+    renderWithApp(<PlaceFinder />);
+    const box = screen.getByRole("combobox", { name: "Site" });
+    await userEvent.type(box, "Mock");
+    await screen.findByRole("listbox", { name: "Places" });
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("listbox")).toBeNull();
+    await userEvent.keyboard("{ArrowDown}");
+    const list = await screen.findByRole("listbox", { name: "Places" });
+    const options = within(list).getAllByRole("option");
+    expect(options[0]).toHaveAttribute("aria-selected", "true");
+    await userEvent.keyboard("{ArrowDown}");
+    expect(options[1]).toHaveAttribute("aria-selected", "true");
+    await userEvent.keyboard("{ArrowUp}");
+    expect(options[0]).toHaveAttribute("aria-selected", "true");
+    await userEvent.keyboard("{Enter}");
+    const picked = await screen.findByTestId("picked-place");
+    expect(picked).toHaveTextContent(options[0]?.textContent ?? "");
+  });
+
+  it("picking a site shows it under the search box, closes the list, and Clear removes it", async () => {
     pathname = "/i/weather";
     installProxyFetch();
     renderWithApp(<PlaceFinder />);
-    await userEvent.click(await screen.findByRole("button", { name: /Mock River Alpha/ }));
+    await userEvent.type(screen.getByRole("combobox", { name: "Site" }), "Alpha");
+    await userEvent.click(await screen.findByRole("option", { name: /Mock River Alpha/ }));
     const picked = await screen.findByTestId("picked-place");
     expect(picked).toHaveTextContent("Mock River Alpha");
-    expect(screen.queryByRole("list", { name: "Places" })).toBeNull();
+    expect(screen.queryByRole("listbox")).toBeNull();
+    expect(screen.getByRole("combobox", { name: "Site" })).toHaveValue("");
     await userEvent.click(within(picked).getByRole("button", { name: "Clear" }));
     expect(screen.queryByTestId("picked-place")).toBeNull();
   });
 
-  it("renders nothing on a lab page", () => {
-    pathname = "/labs/river-risk";
+  it.each(["/i/bathing-classes", "/i/bathing-samples", "/labs/river-risk", "/settings"])("renders nothing on %s", (path) => {
+    pathname = path;
     installProxyFetch();
     const { container } = renderWithApp(<PlaceFinder />);
     expect(container).toBeEmptyDOMElement();

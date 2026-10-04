@@ -48,6 +48,6 @@ export function PickPrompt({ kind = "site" }: { kind?: Kind }) {
   return kind === "site" ? (
     <EmptyState title={t("Choose a site")}>{t("Search for a site in the sidebar, or select one on the map.")}</EmptyState>
   ) : (
-    <EmptyState title={t("Choose a bathing water")}>{t("Search for a bathing water in the sidebar, or select one on the map.")}</EmptyState>
+    <EmptyState title={t("Choose a bathing water")}>{t("Select a bathing water on the map.")}</EmptyState>
   );
 }

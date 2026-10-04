@@ -3,14 +3,15 @@
 Claude Code starts each hook with the repository as the working directory, writes the tool call as JSON on standard
 input (``{"tool_name": ..., "tool_input": {...}}``) and treats exit code 2 as a block (standard error goes to the
 agent) and any other code as "allowed" or as a non-blocking error. The wiring (which hook runs for which tool) is in
-.claude/settings.json and is checked here too.
+hooks/settings.example.json (published) and in the maintainer's local .claude/settings.json (not published, copied from
+the example); both are checked here.
 
 Safety: the hooks only READ the JSON text. Nothing below executes a guarded command; every "dangerous" string is data
 for the hook's regular expressions. Public invocation of the Cloud Run service (the flag that allows unauthenticated
 callers) is blocked on purpose: enabling it is a deliberate, manual maintainer step (docs/predeploy_checklist.md).
 
 Fail-closed contract: a hook that cannot decide (jq missing, empty or malformed input) exits 2, never 127 or 5.
-Coverage contract (.claude/settings.json): the three command hooks run for the Bash and the PowerShell tools; the
+Coverage contract (hooks/settings.example.json): the three command hooks run for the Bash and the PowerShell tools; the
 secrets hook also runs for Read, Edit, Write, NotebookEdit, Grep and Glob.
 
 The tests need a WORKING ``bash`` and ``jq`` (the hooks parse the JSON with jq). The module looks for Git for Windows'
@@ -158,13 +159,20 @@ def test_hook_scripts_exist() -> None:
         assert repo_path(script).is_file()
 
 
-def _wiring() -> dict[str, list[str]]:
-    settings = json.loads(repo_path(".claude", "settings.json").read_text(encoding="utf-8"))
+def _wiring(*parts: str) -> dict[str, list[str]]:
+    settings = json.loads(repo_path(*(parts or ("hooks", "settings.example.json"))).read_text(encoding="utf-8"))
     return {entry["matcher"]: [hook["command"] for hook in entry["hooks"]] for entry in settings["hooks"]["PreToolUse"]}
 
 
+def test_the_local_settings_file_matches_the_published_example_when_it_exists() -> None:
+    local = repo_path(".claude", "settings.json")
+    if not local.is_file():  # a fresh clone has none: .claude/ is not published (copy hooks/settings.example.json to use the hooks)
+        pytest.skip("no local .claude/settings.json")
+    assert _wiring(".claude", "settings.json") == _wiring()
+
+
 def hook_command(script: str) -> str:
-    """The command string of .claude/settings.json: the project directory variable, with the current directory as fallback."""
+    """The command string of the settings: the project directory variable, with the current directory as fallback."""
     return f'bash "${{CLAUDE_PROJECT_DIR:-.}}/{script}"'
 
 
