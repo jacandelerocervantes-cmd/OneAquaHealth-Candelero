@@ -7,3 +7,6 @@ deploy/** text eol=lf
 .github/** text eol=lf
 *.sh text eol=lf
 scripts/*.py text eol=lf
+# The captured fixtures are hashed byte for byte (fixtures/real/*.metadata.json, tests/unit/test_fixtures.py): never
+# convert their line endings, otherwise a Windows checkout (autocrlf, the CI runner) changes the hashes.
+fixtures/** -text

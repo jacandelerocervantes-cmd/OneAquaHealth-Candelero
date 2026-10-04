@@ -1,0 +1,40 @@
+name: Web app
+
+on:
+  push:
+    paths:
+      - "web/**"
+      - "docs/openapi.json"
+      - ".github/workflows/web.yml"
+  pull_request:
+    paths:
+      - "web/**"
+      - "docs/openapi.json"
+      - ".github/workflows/web.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install the locked dependencies
+        run: npm ci
+      - name: Generated types match docs/openapi.json
+        run: npm run types:check
+      - name: Type check, lint and tests
+        run: npm run check
+      - name: Production build (mock data, no secrets)
+        run: npm run build
+        env:
+          OAH_DATA_MODE: mock

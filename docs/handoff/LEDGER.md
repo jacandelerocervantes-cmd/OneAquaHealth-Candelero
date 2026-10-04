@@ -5932,3 +5932,125 @@ Source: `src/oah/bathing_samples/storage.py`, `build.py`, `constants.py`, `store
 ### Next step
 
 - Online session: read the new handoff, then continue as listed there.
+
+## 2026-10-04 -- Agent: Claude -- Web app, block 1: complete app in `web/` on mock data, real mode wired
+
+### Done
+
+- Built the whole web app in `web/` (Next.js 16 App Router, TypeScript strict, Tailwind 4, Leaflet), described in `docs/web_app.md`: country selector and catalogue-driven sidebar (indices that do not apply are hidden, no numbers, origin dots), chat with the states `answered`, `withheld` (notice + evidence block), `withheld-ungrounded`, `no-answer`, `budget-exceeded` and `unsafe` (never rendered), origin and freshness badges, "Sources and method" inside every answer (filled only from response metadata), the response's disclaimer, the English original next to translations, language chip with the 26 languages, right-hand map pane closed by default and opened by the header icon (OpenStreetMap tiles with attribution), index pages with Ask and Data tabs for every real and external index, the three synthetic labs under a permanent "Synthetic lab" banner (review queue read-only), Settings with default language and country and "About and attributions", the fixed notice on every screen, and loading, error, 429 (`Retry-After` countdown), 502/503/422/404 and empty states.
+- Types are generated from `docs/openapi.json` (`npm run types`, `src/lib/api-types.ts`, checked by `npm run types:check`). `npm run check` runs type check, lint and Vitest.
+- Data modes, switched on the server by `OAH_DATA_MODE` (`mock` default, `real`): mock answers (`src/lib/server/mock/`) are typed from the generated schemas and validated at run time against `docs/openapi.json` for every route and every chat state; real mode forwards through route handlers with an allow-list (`src/lib/server/allowlist.ts`) using the server-only variables `OAH_BACKEND_URL` and `OAH_API_KEY` (never reaches the browser; static tests enforce it), validated chat body, cross-site POST refusal, sanitised `Retry-After`, opaque visitor cookie sent as `X-OAH-End-User`, and a backend 401 shown as 502.
+- Security headers (CSP with nonce, Referrer-Policy, nosniff, frame denial, HSTS, Permissions-Policy) in `src/proxy.ts`; all text rendered as React text nodes (no raw HTML anywhere; ESLint rule plus a static test).
+- Verified in a headless Chromium against the production build on mock data: sidebar, data tab, map pane with markers and attribution, chat with a translated answer. OSM tiles could not load here (outbound access to the tile host is blocked in this environment), so only markers and attribution were seen.
+- Added `.github/workflows/web.yml` (npm ci, types check, check, build). Not run yet.
+
+### Files touched
+
+- New: `web/` (sources, tests, config, `package-lock.json`, `env.example`, `README.md`), `docs/web_app.md`, `.github/workflows/web.yml`. Edited: `docs/handoff/LEDGER.md`.
+
+### Test status
+
+- `npm run check` in `web/`: type check clean, ESLint clean, 126 Vitest tests passed (9 files); `npm run build` succeeds. Python suite not run (no Python environment here); `docs/web_app.md` and `web/` contain no absolute path or machine marker (checked with the portability patterns).
+
+### Decisions taken without asking (autonomous session)
+
+- Tailwind 4 and TypeScript 5.9 (TypeScript 7 lacks the compiler API that `openapi-typescript` needs). Default data mode is `mock` so a checkout never calls a backend by accident.
+- A picked place is passed as the prefix `About <name> (<id>): ` of the next question because the contract has no site field.
+- The root example environment file is protected by the secret hook (an agent cannot read or edit it), so the new variable names are in `web/env.example` and `docs/web_app.md`.
+- Mock `source` fields say `real-sandbox` only because the contract has no `synthetic` value there; the UI labels by `origin` and shows a mock banner (documented).
+- `npm audit` reports 5 high advisories in build-time glob matching under `eslint-config-next`; not shipped, not fixed (the fix is a breaking downgrade).
+
+### Open items for the maintainer
+
+- Add `OAH_DATA_MODE`, `OAH_BACKEND_URL`, `OAH_API_KEY` to the root example environment file and to Vercel (the key as a secret) when deploying; run `npm install` in `web/` (node_modules is git-ignored).
+- Real mode is untested against the real backend; it needs the backend to be public for Vercel (manual step in `docs/predeploy_checklist.md`).
+- Confirm the attribution wording in `web/src/lib/attributions.ts` (GloFAS credit wording is still unconfirmed in `docs/external_context.md`).
+- Needs code review and QA before merge. Working tree uncommitted.
+
+### Next step
+
+- Block 2: exercise real mode against a local fake backend, mobile and dark-mode checks, error boundary and not-found pages, accessibility pass, then re-run the gates and append the block 2 entry.
+
+## 2026-10-04 -- Agent: Claude -- Web app, block 2: real-mode plumbing verified, responsive and dark-mode pass, hardening tests
+
+### Done
+
+- Exercised real mode end to end against a local stand-in backend (outside the repository) that checks the access key header and relays to the mock: the key and the `X-OAH-End-User` token reached the backend only from the server (token only on chat), the browser contacted its own origin only, the key was in no page or API body, the visitor cookie was HttpOnly, a 429 showed the `Retry-After` countdown, and the mock banner was absent. This proves the plumbing; the real backend is still untested.
+- Visual pass in headless Chromium: mobile (390 px, no horizontal scroll, header shows only the chevron for "About this index" so the title fits), drawer sidebar, dark mode (withheld answer with evidence, synthetic lab, settings). Fixed what it showed: truncated title on mobile, truncated language names (options now show the endonym only), lower-case lab parameter names.
+- Added `error.tsx`, `not-found.tsx` and an icon; a stored country the service does not know falls back to the first listed country; changing the country clears a picked place (it belongs to the country it was picked in).
+- More tests: a seeded fuzz test of the allow-list (no traversal, no unlisted route, no unlisted query key), a portability scan of the web sources (no absolute path or machine marker), the country fallback. `docs/web_app.md` updated with what was verified.
+
+### Files touched
+
+- `web/src/app/error.tsx`, `not-found.tsx`, `icon.svg`, `web/src/components/` (`page-header`, `chat`, `settings-view`, `lab-view`, `sidebar`), `web/tests/` (`allowlist`, `security`, `sidebar`), `docs/web_app.md`, `docs/handoff/LEDGER.md`.
+
+### Test status
+
+- In `web/`: `npm run check` clean (type check, ESLint, 129 Vitest tests in 9 files), `npm run types:check` up to date, `npm run build` succeeds. Python suite not run (no Python environment here).
+
+### Open items for the maintainer
+
+- Everything listed in the block 1 entry still applies (variable names in the root example environment file and in Vercel, `npm install` in `web/`, real backend test once public, attribution wording, review and QA, nothing committed).
+- OpenStreetMap tiles were not seen (blocked here): look at the map once on your machine, with the browser console open, to confirm there is no CSP violation (the CSP allows `https://tile.openstreetmap.org`).
+- Vercel: the per-visitor limit and bot protection are still a Vercel-side task (see `docs/predeploy_checklist.md`); the app only sends the opaque token.
+- Needs the backend running to see real answers (live chat questions 5 to 14 and the pH fix from the previous handoff are unchanged by this work).
+
+### Next step
+
+- Maintainer: `npm install` and `npm run dev` in `web/` to look at it, then Create PR. If more time is available: a keyboard and screen-reader pass, and a first run of the `Web app` workflow.
+
+## 2026-10-04 -- Agent: Claude -- Web app: modular split of the two longest files
+
+### Done
+
+- On the maintainer's request (modular design, no very long files; the line limits in `docs/contexto-proyecto.md` are 400-500 for core and 200-300 for UI and utilities) split `web/src/lib/server/mock/handlers.ts` (545 lines) into `common.ts`, `routes/{sites,bathing,external,labs,chat}.ts` and a 38-line dispatcher that keeps the same exports, and `web/src/components/index-data.tsx` (405 lines) into `components/index-data/{shared,site-picker,water-panels,bathing-panels,external-panels,index}.tsx` (same default export and `SourceFooter`). No behaviour change. The largest file is now 263 lines (excluding the generated `api-types.ts`).
+
+### Test status
+
+- `npm run check` clean (129 tests passed), `npm run build` succeeds.
+
+### Files touched
+
+- `web/src/lib/server/mock/`, `web/src/components/index-data/`, `docs/handoff/LEDGER.md`.
+
+### Next step
+
+- None pending from this change; the open items of the block 1 and 2 entries stand.
+
+## 2026-10-04 -- Agent: Claude -- GitHub Actions failures on the first push of the new repository (diagnosis)
+
+### Done
+
+- Read the two failed runs of the initial commit on `main` (workflows `CI`: 79 failed, 3287 passed; `Deploy checks`: 1 failed). Both come from two causes, neither from the web app:
+  1. **`src/oah/external/data/gbif_taxa.json` is not in the new repository** (the whole `src/oah/external/data/` folder is missing from the commit; `git ls-files` shows nothing there). 78 tests fail with `TaxaError: cannot read the taxon file` and the deploy check `test_the_taxon_file_the_external_context_reads_ships_inside_the_copied_source_tree` fails. The cause is almost certainly the clean-copy script (outside the repository), which excluded folders named `data`. The file is a researched list of taxon keys (`docs/external_context.md` section 7), so it was NOT recreated here; it must be copied from the maintainer's machine.
+  2. **`tests/unit/test_fixtures.py::test_real_fixtures_are_labeled_and_validated`** fails on the Windows runner (`CI` uses `windows-latest`): Git converts the fixtures to CRLF on checkout, so their SHA-256 differs from `fixtures/real/*.metadata.json`. Verified here that the committed blobs are LF and match the metadata hashes exactly. Fix: `.gitattributes` now has `fixtures/** -text` (no line-ending conversion).
+- Also check for other folders named `data` that the copy script may have dropped under `src/` (none other is referenced by the code I could grep; the `data/` folder at the repository root holds only the stores' outside-the-repo placeholders).
+
+### Files touched
+
+- `.gitattributes`, `docs/handoff/LEDGER.md`.
+
+### Open items for the maintainer
+
+- Copy `src/oah/external/data/gbif_taxa.json` (and any other missing `data` folder under `src/`) from the original working copy, commit, push; the 78 + 1 failures should then clear. The fixtures fix needs the `.gitattributes` change committed and the fixtures re-checked out (a fresh runner checkout is enough).
+- The new `Web app` workflow has not run yet (it triggers on changes under `web/`).
+
+### Next step
+
+- Re-run the workflows after the two fixes above.
+
+## 2026-10-04 -- Agent: Claude -- Web app: accessibility pass
+
+### Done
+
+- Ran axe-core (WCAG 2 A and AA plus best practices) in headless Chromium on the production build, mock data, light and dark, over home, an answer with "Sources and method" open, a withheld-ungrounded answer, the data tab, the map pane with a place selected, a synthetic lab and settings (14 passes). The only finding was heading order in answers (h1 then h4): answers now carry a visually hidden `h2 "Answer"` and their sub-sections are `h3`. Re-run: 0 violations in all 14 passes.
+- Keyboard: Escape closes the mobile menu, then the map pane; the place list below the map is the keyboard route to select a place (Leaflet circle markers are mouse and touch only); focus rings use `:focus-visible`.
+- New test `web/tests/shell.test.tsx` (mock banner, fixed notice, Escape). `npm run check`: 131 tests passed.
+
+### Not done (needs the maintainer or other access)
+
+- A screen-reader listening pass (axe finds structural problems only), Vercel settings, the root example environment file (blocked for agents), the pH rebuild and live chat questions (need the stores and the deployed service).
+
+### Files touched
+
+- `web/src/components/answer.tsx`, `web/src/components/app-shell.tsx`, `web/tests/shell.test.tsx`, `docs/handoff/LEDGER.md`.
