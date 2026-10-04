@@ -35,7 +35,7 @@ describe("ChatView", () => {
     expect((screen.getByLabelText("Your question") as HTMLTextAreaElement).value).toMatch(/\w/);
   });
 
-  it("offers the 26 languages of GET /languages and a default of es-MX is applied from settings", async () => {
+  it("offers the 26 languages of GET /languages and applies the language chosen in the settings", async () => {
     window.localStorage.clear();
     updateSettings({ language: "es-MX", defaultLanguage: "es-MX" });
     installProxyFetch();

@@ -1,7 +1,8 @@
 # Web app interface language
 
 Status: 2026-10-04. The whole interface (menus, labels, notices, table headers, error messages) follows the language
-selected in the language selector next to the question box, not only the chat answers. Default: `es-MX`. The 26 codes are
+selected in the language selector next to the question box, not only the chat answers. Default: English (a visitor who has not chosen a language sees English; the choice is kept in
+the browser). The 26 codes are
 the ones of the backend (`GET /languages`): English plus the 25 dictionaries in `web/src/lib/locales/`.
 
 ## How it works
@@ -34,7 +35,7 @@ The 24 dictionaries that are not English are **machine-drafted** (written by the
 been reviewed by humans, in line with `docs/language_support.md`. They are checked automatically, not linguistically:
 `npm run i18n` (also part of `npm run check` and of the Web app workflow) fails when a language misses a text, holds a text
 that is not in the source, changes a `{placeholder}`, or adds markup or a link. A native-speaker review is open work, and
-`es-MX`, the default, should be reviewed first.
+`es-MX` (the maintainer's language) should be reviewed first.
 
 ## Changing or adding a text
 

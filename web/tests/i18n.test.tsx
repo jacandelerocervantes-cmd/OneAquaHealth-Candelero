@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import esMX from "@/lib/locales/es-MX.json";
 import keys from "@/lib/locales/_keys.json";
-import { updateSettings } from "@/lib/client/settings-store";
+import { DEFAULT_SETTINGS, getSettings, updateSettings } from "@/lib/client/settings-store";
 import { formatNumber } from "@/lib/format";
 import { countryName, interpolate, intlTag, resolveLocale, translate, useT } from "@/lib/i18n";
 import { COUNTRY_NAMES } from "@/lib/constants";
@@ -19,6 +19,21 @@ function Probe({ text }: { text: string }) {
   const t = useT();
   return <p data-testid="probe">{t(text, { n: 3 })}</p>;
 }
+
+describe("the default language", () => {
+  it("is English for a visitor who has chosen nothing", () => {
+    window.localStorage.clear();
+    expect(DEFAULT_SETTINGS.language).toBe("en");
+    expect(DEFAULT_SETTINGS.defaultLanguage).toBe("en");
+    expect(getSettings().language).toBe("en");
+  });
+
+  it("shows the interface in English when nothing is stored", () => {
+    window.localStorage.clear();
+    render(<Probe text="Wait {n} s" />);
+    expect(screen.getByTestId("probe")).toHaveTextContent("Wait 3 s");
+  });
+});
 
 describe("language resolution and formatting", () => {
   it("maps language codes to dictionaries", () => {

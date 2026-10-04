@@ -12,7 +12,7 @@ export const FALLBACK_DISCLAIMER = msg(
   "AI-generated from tool results, not verified. Screening against reference values, not legal compliance; never a potability, health or regulatory determination.",
 );
 
-export const DEFAULT_LANGUAGE = "es-MX";
+export const DEFAULT_LANGUAGE = "en";
 export const DEFAULT_COUNTRY = "GR";
 export const SOURCE_LANGUAGE = "en";
 export const MAX_MESSAGE_LENGTH = 500;

@@ -94,7 +94,7 @@ or the key.
   and language, the English original next to a translation (and a note when a translation was rejected), **Sources and
   method** inside the answer (data source and licence, method steps, limits, coverage flags, translation checks, all
   from response metadata, never model text) and the response's own disclaimer at the end. The model name is not shown.
-  Language selector with the languages of `GET /languages` (26 in the backend), default `es-MX`.
+  Language selector with the languages of `GET /languages` (26 in the backend), default English; the choice changes the whole interface, not only the answers (`docs/web_app_i18n.md`).
 - **Map pane:** closed by default, opened only by the header icon; Leaflet with OpenStreetMap tiles and attribution,
   loaded only when opened. Markers are drawn as circles (no marker images), names are set as text nodes. A list below
   the map gives keyboard access. Selecting a place does not start a question; it shows a card and becomes the context

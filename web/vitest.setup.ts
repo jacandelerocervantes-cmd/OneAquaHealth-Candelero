@@ -2,8 +2,8 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach, beforeEach } from "vitest";
 
-// The app starts in es-MX; the tests read English texts, so every test starts with English selected.
-// A test that checks the defaults clears the storage itself.
+// The default language is English; the stored settings are written here so that every test starts from the same known
+// state. A test that checks the defaults clears the storage itself (tests/i18n.test.tsx).
 beforeEach(() => {
   window.localStorage.setItem(
     "oah.settings.v1",
