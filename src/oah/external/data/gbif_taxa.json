@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "discovered_on": "2026-10-03",
+  "method": "Each key below was DISCOVERED, not written from memory: one read-only GET of https://api.gbif.org/v1/species/match?name=<name>&rank=<rank>&kingdom=Animalia on the discovery date, taking usageKey, rank, status, matchType and confidence from the answer. Only matches with matchType EXACT, status ACCEPTED and the expected rank were kept. The keys are GBIF backbone keys; a search by taxonKey includes the taxon's descendants.",
+  "backbone_note": "GBIF backbone keys can change when the backbone is rebuilt. Re-run the discovery (see docs/external_context.md section 7) and compare before trusting this file after a long time; the loader refuses a file whose groups do not satisfy the rules in oah.external.taxa.",
+  "selection_note": "The selection is the project's own judgement, not a regulatory or official list: the orders whose larvae are the classic freshwater macroinvertebrate indicator groups (Ephemeroptera, Plecoptera, Trichoptera, together called EPT), and four more groups that are common in freshwater macroinvertebrate surveys or are freshwater specialists. Presence of a group near a site says nothing about the water quality of the site.",
+  "groups": [
+    {
+      "id": "ephemeroptera",
+      "name": "Ephemeroptera",
+      "common_name": "mayflies",
+      "rank": "ORDER",
+      "usage_key": 1225,
+      "status": "ACCEPTED",
+      "match_type": "EXACT",
+      "confidence": 98,
+      "justification": "EPT order: larvae live in freshwater and are a standard macroinvertebrate indicator group.",
+      "caveat": "Records of adults (winged stages) show where animals were seen, not necessarily where the larvae live."
+    },
+    {
+      "id": "plecoptera",
+      "name": "Plecoptera",
+      "common_name": "stoneflies",
+      "rank": "ORDER",
+      "usage_key": 787,
+      "status": "ACCEPTED",
+      "match_type": "EXACT",
+      "confidence": 98,
+      "justification": "EPT order: larvae live in freshwater and are a standard macroinvertebrate indicator group.",
+      "caveat": "Records of adults show where animals were seen, not necessarily where the larvae live."
+    },
+    {
+      "id": "trichoptera",
+      "name": "Trichoptera",
+      "common_name": "caddisflies",
+      "rank": "ORDER",
+      "usage_key": 1003,
+      "status": "ACCEPTED",
+      "match_type": "EXACT",
+      "confidence": 98,
+      "justification": "EPT order: larvae live in freshwater and are a standard macroinvertebrate indicator group.",
+      "caveat": "Records of adults show where animals were seen, not necessarily where the larvae live."
+    },
+    {
+      "id": "odonata",
+      "name": "Odonata",
+      "common_name": "dragonflies and damselflies",
+      "rank": "ORDER",
+      "usage_key": 789,
+      "status": "ACCEPTED",
+      "match_type": "EXACT",
+      "confidence": 98,
+      "justification": "Larvae are aquatic predators of freshwater; adults are conspicuous and widely recorded by citizen scientists.",
+      "caveat": "Many records are of adults, which can be far from water."
+    },
+    {
+      "id": "chironomidae",
+      "name": "Chironomidae",
+      "common_name": "non-biting midges",
+      "rank": "FAMILY",
+      "usage_key": 3343,
+      "status": "ACCEPTED",
+      "match_type": "EXACT",
+      "confidence": 98,
+      "justification": "A family of mostly aquatic larvae found in almost every freshwater habitat and common in macroinvertebrate surveys.",
+      "caveat": "The family is large and ecologically varied, so a record says little about a particular habitat."
+    },
+    {
+      "id": "gammaridae",
+      "name": "Gammaridae",
+      "common_name": "freshwater shrimps (scuds)",
+      "rank": "FAMILY",
+      "usage_key": 4434,
+      "status": "ACCEPTED",
+      "match_type": "EXACT",
+      "confidence": 98,
+      "justification": "Amphipod crustaceans of fresh and brackish water, common in macroinvertebrate surveys.",
+      "caveat": "The family also contains brackish and marine species, so a record is not necessarily from freshwater."
+    },
+    {
+      "id": "unionida",
+      "name": "Unionida",
+      "common_name": "freshwater mussels",
+      "rank": "ORDER",
+      "usage_key": 9301143,
+      "status": "ACCEPTED",
+      "match_type": "EXACT",
+      "confidence": 98,
+      "justification": "Freshwater bivalves that live in rivers and lakes.",
+      "caveat": "Records can come from old surveys and museum specimens as well as recent observations."
+    }
+  ],
+  "aliases": {
+    "ept": ["ephemeroptera", "plecoptera", "trichoptera"]
+  },
+  "rejected_matches": [
+    {
+      "name": "Plecoptera",
+      "query": "name only (no rank or kingdom)",
+      "result": "usageKey 216, rank CLASS (Insecta), matchType HIGHERRANK, confidence 92",
+      "action": "Rejected: not the order. Repeated with rank=ORDER and kingdom=Animalia, which gave key 787 (EXACT)."
+    },
+    {
+      "name": "Oligochaeta",
+      "query": "name and kingdom",
+      "result": "usageKey 8166676, status SYNONYM of key 255 (class Clitellata)",
+      "action": "Left out: a synonym that resolves to a class containing terrestrial earthworms as well."
+    },
+    {
+      "name": "Hirudinea",
+      "query": "name and kingdom",
+      "result": "usageKey 2483241, a bird genus (Hirundinea), matchType FUZZY, confidence 85",
+      "action": "Rejected: a fuzzy match to an unrelated genus."
+    },
+    {
+      "name": "Astacidea",
+      "query": "name and kingdom",
+      "result": "usageKey 8022, family Astacidae, matchType FUZZY, confidence 85",
+      "action": "Left out: not an exact match for the name that was asked."
+    }
+  ]
+}
