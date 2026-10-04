@@ -45,6 +45,19 @@ export const RULES: readonly Rule[] = [
       resolution: /^(annual|monthly)$/,
     },
   },
+  {
+    // The same selection as the measurements table, as a FHIR R4 Bundle (the "Download as FHIR" button).
+    method: "GET",
+    template: "/sites/{}/fhir",
+    query: {
+      parameter: FREE,
+      date_from: ISO_DATE,
+      date_to: ISO_DATE,
+      limit: INT,
+      group: /^(water-chemistry|solids-turbidity|organic-matter)$/,
+      resolution: /^(annual|monthly)$/,
+    },
+  },
   { method: "GET", template: "/sites/{}/weather", query: { date_from: ISO_DATE, date_to: ISO_DATE, language: LANG } },
   { method: "GET", template: "/sites/{}/discharge", query: { date_from: ISO_DATE, date_to: ISO_DATE, language: LANG } },
   {

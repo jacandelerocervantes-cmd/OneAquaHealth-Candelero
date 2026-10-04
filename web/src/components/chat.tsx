@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type R
 import type { ChatIndex, ChatRequest, LanguagesResponse } from "@/lib/api";
 import { ApiError, apiChat, deadlineFrom, describeError } from "@/lib/client/api";
 import { useApp, type ChatMessage, type ErrorMessage } from "@/lib/client/app-context";
-import { updateSettings, useSettings } from "@/lib/client/settings-store";
+import { useSettings } from "@/lib/client/settings-store";
 import { useT } from "@/lib/i18n";
 import { useApi } from "@/lib/client/use-api";
 import { MAX_HISTORY_TURNS, MAX_MESSAGE_LENGTH, SUGGESTIONS } from "@/lib/constants";
@@ -232,26 +232,7 @@ export function ChatView({ chatKey, country, chatIndex, indexId, below }: Props)
               className="w-full resize-none bg-transparent px-2 py-1 outline-none"
             />
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <label htmlFor="language" className="sr-only">
-                  {t("Language")}
-                </label>
-                <select
-                  id="language"
-                  data-testid="language-select"
-                  value={settings.language}
-                  onChange={(e) => updateSettings({ language: e.target.value })}
-                  className="max-w-[12rem] rounded-full border border-line bg-surface px-3 py-1 text-sm"
-                >
-                  {languageList.length === 0 ? <option value={settings.language}>{settings.language}</option> : null}
-                  {languageList.map((l) => (
-                    <option key={l.code} value={l.code}>
-                      {l.endonym}
-                    </option>
-                  ))}
-                </select>
-                <span className="text-xs text-muted">{text.length}/{maxLength}</span>
-              </div>
+              <span className="px-2 text-xs text-muted">{text.length}/{maxLength}</span>
               <button
                 type="submit"
                 disabled={pending || blocked || !text.trim()}

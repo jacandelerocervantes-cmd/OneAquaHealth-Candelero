@@ -11,6 +11,7 @@ from oah.api.payloads import _countries_overview, _official_observations
 from oah.api.schemas import (
     CountriesResponse,
     ErrorResponse,
+    FhirBundleResponse,
     IndexResponse,
     ParameterGroup,
     SiteMeasurementsResponse,
@@ -21,9 +22,11 @@ from oah.api.services import get_data_freshness
 from oah.bathing import service as bathing
 from oah.bathing_samples import service as bathing_samples
 from oah.chat import normalise_country
+from oah.fhir.output.measurements import NoValuesError, measurements_bundle
 from oah.indices.apply_to_sandbox import list_sites_with_status
 from oah.indices.regimes import INTERPRETATION_NOTICE
 from oah.indices.site_measurements import location_known, parameter_names, site_measurement_records
+from oah.timeutil import format_utc, utc_now
 from oah.waterbase import service as waterbase
 from oah.waterbase.mapping import ATTRIBUTION as WATERBASE_ATTRIBUTION
 from oah.waterbase.mapping import GROUP_WATER_CHEMISTRY
@@ -204,6 +207,35 @@ def site_measurements(
         "truncated": len(records) > limit,
         "records": records[:limit],
     }
+
+
+@router.get(
+    "/sites/{location_id}/fhir",
+    response_model=FhirBundleResponse,
+    responses={404: {"model": ErrorResponse}, 422: {"model": ErrorResponse}},
+)
+def site_fhir(
+    location_id: str,
+    parameter: str | None = Query(default=None, max_length=64),
+    date_from: date | None = None,
+    date_to: date | None = None,
+    limit: int = Query(default=200, ge=1, le=500),
+    group: ParameterGroup | None = None,
+    resolution: Literal["annual", "monthly"] = "annual",
+) -> dict[str, Any]:
+    """The measurements of ONE site as a FHIR R4 collection Bundle in JSON (read-only; same selection as ``/measurements``).
+
+    The Bundle holds a ``Location``, one ``Observation`` per measurement that has a numeric value (the parameter is text
+    only: no code is invented; a UCUM unit code only where the unit is written the UCUM way), a software ``Device`` and a
+    ``Provenance`` naming the source and its attribution. Each resource carries the project-defined data-origin tag.
+    It does not claim conformance to the OneAquaHealth profiles. A selection without any numeric value is a 404.
+    See docs/fhir_mapping.md, section "Site measurements export".
+    """
+    payload = site_measurements(location_id, parameter, date_from, date_to, limit, group, resolution)
+    try:
+        return measurements_bundle(payload, format_utc(utc_now()))
+    except NoValuesError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
 
 
 @router.get("/indices/{location_id}", response_model=IndexResponse, responses={404: {"model": ErrorResponse}})

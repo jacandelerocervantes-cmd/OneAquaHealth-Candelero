@@ -26,6 +26,8 @@ from oah.api.schemas.common import (
     UiStatus,
 )
 from oah.api.schemas.sites import (
+    FhirBundleEntry,
+    FhirBundleResponse,
     IndexResponse,
     MeasurementRecord,
     MeasurementResolution,
@@ -145,6 +147,8 @@ __all__ = [
     "ErrorResponse",
     "ExplanationResponse",
     "FindingsExportResponse",
+    "FhirBundleEntry",
+    "FhirBundleResponse",
     "FreshnessStatus",
     "HealthResponse",
     "IndexResponse",

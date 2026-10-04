@@ -35,13 +35,11 @@ describe("ChatView", () => {
     expect((screen.getByLabelText("Your question") as HTMLTextAreaElement).value).toMatch(/\w/);
   });
 
-  it("offers the 26 languages of GET /languages and applies the language chosen in the settings", async () => {
-    window.localStorage.clear();
-    updateSettings({ language: "es-MX", defaultLanguage: "es-MX" });
+  it("has no language selector in the question box (the language is chosen in the sidebar)", async () => {
     installProxyFetch();
     view();
-    await waitFor(() => expect(within(screen.getByTestId("language-select")).getAllByRole("option")).toHaveLength(26));
-    expect(screen.getByTestId("language-select")).toHaveValue("es-MX");
+    expect(screen.queryByTestId("language-select")).toBeNull();
+    expect(screen.getByLabelText("Your question")).toBeInTheDocument();
   });
 
   it("sends a question, shows a loading state, then the answer card; the request has no key and the right fields", async () => {

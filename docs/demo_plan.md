@@ -1,5 +1,8 @@
 # Demo plan: five days to the submission
 
+**Superseded (2026-10-04):** the product built is the chat web app described in `docs/web_app.md`, and the video plan is
+`docs/demo_video_script.md`. Kept for the history of the decisions.
+
 Status: 2026-09-30. Definition only: no frontend code exists yet. This plan replaces the open scope questions of
 `docs/frontend_conceptual_design.md` (read that document for the analysis behind it).
 

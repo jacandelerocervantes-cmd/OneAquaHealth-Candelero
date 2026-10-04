@@ -84,7 +84,12 @@ or the key.
 - **Header:** title, "About this index" chevron (coverage for the country, kind, origins, data freshness, routes),
   download button (JSON of the table shown or, in Ask, of the data behind the latest answer: citations, evidence and
   steps, never the answer text) and the **map icon**.
-- **Index page:** tabs **Ask** (chat) and **Data** (the route data behind the index: measurements, bathing waters
+- **Download as FHIR (2026-10-04):** under the measurements table of a site, a button saves the same selection as a FHIR R4
+  Bundle served by the backend (`GET /sites/{location_id}/fhir`, `docs/fhir_mapping.md`, section "Site measurements
+  export"), with a one-line explanation of what FHIR is for readers who do not know it. No claim of conformance to the
+  OneAquaHealth profiles is made.
+- **Index page (as first designed; since 2026-10-04 there are no tabs: the chat is the page and the data of the index sits
+  under the answers):** tabs **Ask** (chat) and **Data** (the route data behind the index: measurements, bathing waters
   and sample summaries, weather, discharge, species, water-quality index, data-quality report), each with origin
   badge, freshness and the notices and attribution the route returned. An index that does not apply to the country
   explains why instead of showing empty.

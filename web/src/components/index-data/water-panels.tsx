@@ -6,6 +6,7 @@ import { useApi } from "@/lib/client/use-api";
 import { formatNumber, formatPeriod, humanise } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { Async, DataTable, EmptyState, KeyValues, Notice, Pill } from "../ui";
+import { FhirDownload } from "./fhir-download";
 import { SourceFooter, useExport } from "./shared";
 
 export function WaterQualityPanel({ siteId }: { siteId: string }) {
@@ -46,6 +47,7 @@ export function MeasurementsPanel({ siteId, group }: { siteId: string; group?: s
             ]}
           />
           {d.truncated ? <Notice tone="info">{t("More records exist than are listed here.")}</Notice> : null}
+          <FhirDownload siteId={siteId} group={group} />
           <SourceFooter origin={d.origin} freshness={d.data_freshness} attribution={d.attribution} notices={[d.interpretation_notice]} />
         </div>
       )}

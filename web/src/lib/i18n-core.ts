@@ -34,6 +34,11 @@ export function intlTag(language: string): string {
   return locale === "nb" ? "nb-NO" : locale;
 }
 
+/** The short label of a language in a narrow selector: its code in capitals (EN, IT, FR, ES-MX). */
+export function languageShortLabel(code: string): string {
+  return code.toUpperCase();
+}
+
 export function interpolate(template: string, params?: Params): string {
   if (!params) return template;
   return template.replace(/\{(\w+)\}/g, (whole, name: string) => (name in params ? String(params[name]) : whole));

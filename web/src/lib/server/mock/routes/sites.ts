@@ -1,6 +1,7 @@
 import { MOCK_NOTICE, MOCK_SITES, freshness, siteById, stores } from "../data";
 import { type MockResult, ok, err, asCountry, NO_SITE } from "../common";
 import type { Schema } from "@/lib/api";
+import { measurementsBundle } from "@/lib/fhir";
 
 export function sites(p: URLSearchParams): MockResult {
   const country = p.get("country") ? asCountry(p.get("country")) : null;
@@ -86,6 +87,14 @@ export function measurements(id: string, p: URLSearchParams): MockResult {
     records,
   };
   return ok(body);
+}
+
+/** The mock of `GET /sites/{id}/fhir`: the mock measurements as a Bundle (every resource is tagged synthetic). */
+export function fhir(id: string, p: URLSearchParams): MockResult {
+  const site = siteById(id);
+  const res = measurements(id, p);
+  if (!site || res.status !== 200) return res;
+  return ok(measurementsBundle(res.body as Schema<"SiteMeasurementsResponse">, { id, name: site.name, latitude: site.latitude, longitude: site.longitude }));
 }
 
 export function indexFor(id: string): MockResult {

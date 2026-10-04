@@ -35,6 +35,36 @@ describe("index data panels", () => {
     expect(within(footer).getByTestId("freshness-badge")).toBeInTheDocument();
   });
 
+  it("the measurements table offers 'Download as FHIR': the same selection, from the FHIR route, saved as a file", async () => {
+    const { calls } = installProxyFetch();
+    const blobs: Blob[] = [];
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: (b: Blob) => (blobs.push(b), "blob:fhir"), revokeObjectURL: () => undefined }));
+    renderWithPlace(<IndexData indexId="solids-turbidity" />, SITE_GR);
+    await screen.findByRole("table", { name: "Measurements" });
+    const box = screen.getByTestId("fhir-download");
+    expect(box).toHaveTextContent("international standard health systems use to exchange data");
+    await userEvent.click(within(box).getByRole("button", { name: "Download as FHIR" }));
+    await waitFor(() => expect(blobs).toHaveLength(1));
+    const call = calls.find((c) => c.url.includes("/fhir"));
+    expect(call?.url).toContain("/sites/mock-gr-001/fhir");
+    expect(call?.url).toContain("group=solids-turbidity");
+    const text = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.readAsText(blobs[0] as Blob);
+    });
+    const bundle = JSON.parse(text) as { resourceType: string; type: string };
+    expect(bundle).toMatchObject({ resourceType: "Bundle", type: "collection" });
+  });
+
+  it("shows an error under the FHIR button when the download fails", async () => {
+    installProxyFetch((url) => (url.pathname.endsWith("/fhir") ? jsonResponse(404, { detail: "No measurement with a numeric value for this selection." }) : undefined));
+    renderWithPlace(<IndexData indexId="water-parameters" />, SITE_GR);
+    await screen.findByRole("table", { name: "Measurements" });
+    await userEvent.click(screen.getByRole("button", { name: "Download as FHIR" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Nothing was found for this request.");
+  });
+
   it("solids and turbidity: asks the route for that group only", async () => {
     const { calls } = installProxyFetch();
     renderWithPlace(<IndexData indexId="solids-turbidity" />, SITE_GR);

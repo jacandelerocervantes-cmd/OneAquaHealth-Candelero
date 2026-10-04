@@ -205,6 +205,17 @@ by period start, parameter, Observation id. Each record:
 `not-scored` records keep their value but no limit comparison: water temperature in countries where it is interpretive only (GR, IT)
 and hardness-dependent cadmium on rivers. `data_freshness` is on the response, not repeated per record.
 
+## `GET /sites/{location_id}/fhir`
+
+Code: `src/oah/fhir/output/measurements.py`, route in `src/oah/api/routes/sites.py`. Read-only. Same query and same errors as
+`GET /sites/{location_id}/measurements` (the route calls it, so the two never disagree); the answer is a FHIR R4 collection
+`Bundle` in JSON (typed `FhirBundleResponse` in the contract: the envelope is typed, the FHIR resources are free-form FHIR JSON): one `Location`, one `Observation` per record that has a numeric value, one
+software `Device` and one `Provenance` (targets: every Observation; source: the attribution of the data). Records without a value
+are left out; a selection with no numeric value at all is a 404. No code is invented (the parameter is `code.text` only; a UCUM
+unit code only for units written the UCUM way). Every resource carries the project-defined data-origin tag of its record. It
+does not claim conformance to the OneAquaHealth profiles. The web app's "Download as FHIR" button on the measurements table calls
+it. Details and rules: `docs/fhir_mapping.md`, section "Site measurements export".
+
 ### Waterbase sites (package 3)
 
 Same route, same fields, with these differences (`docs/waterbase_store.md` has the rules). `origin` and `source` are

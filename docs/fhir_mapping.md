@@ -75,6 +75,28 @@ the Bundle as a `CodeSystem` resource. EQR, BMWP and ASPT are implemented as fun
 exported: the public sandbox has no macroinvertebrate data, so no honest value exists to emit.
 Provenance targets every emitted Observation and identifies a software Device agent.
 
+## Site measurements export (`GET /sites/{location_id}/fhir`)
+
+Added 2026-10-04 (`src/oah/fhir/output/measurements.py`; tests `tests/unit/test_fhir_measurements.py`). A read-only route that
+serves the measurements of ONE site (sandbox or EEA Waterbase) as a FHIR R4 collection Bundle, so that a person can take the
+data into any FHIR system with one click (the web app's "Download as FHIR" button).
+
+| Element | Value | Traceability |
+| --- | --- | --- |
+| `Location` | `identifier` (project system `location-id`, value = the site id), `name`, `mode` instance, `position` when the site has coordinates | the site record of the API; no profile claimed |
+| `Observation` | one per record with a numeric `value`; `status` final; `code.text` = the parameter name (NO `coding`: no code is invented); `valueQuantity` with `unit` and, only for units known to be valid UCUM as written (`mg/L`, `ug/L`, `Cel`, `%`, `mS/cm`, `uS/cm`, `mg{P}/L`, `mg{N}/L`, `mg{NO3}/L`, `mg{NH4}/L`, `mg{NO2}/L`), UCUM `system` and `code`; `comparator` for censored values; `effectivePeriod` or `effectiveDateTime` from the record | the record of `GET /sites/{id}/measurements` |
+| `Observation.note` | statistic, n, observed range, count below the limit of quantification, reference check, reference value with its basis, and "Reference values are screening aids, not legal limits." | same record |
+| `meta.tag` | data origin of the record under the project system `.../CodeSystem/data-origin` (`real-eea-waterbase`, `real-sandbox`); the Bundle also carries `real-derived` | same system as the other exports |
+| `Device`, `Provenance` | one software Device; Provenance targets every Observation, source = the attribution of the data, reason = the screening statement | `oah.fhir.output.builders` |
+
+Ids are deterministic (UUID5 of site, parameter, period, statistic, matrix and unit), so the same selection gives the same
+Observation ids; only the Provenance (recorded time and id) changes between calls. Records without a value are left out; a
+selection without any value is a 404. Structural validity (FHIR R4B models of `fhir.resources`) of the Bundle and of every
+resource is tested; **it is not validated against the OneAquaHealth profiles and no conformance to them is claimed** (those
+profiles describe the derived indicators of `build_indicators_bundle`, and the official validator run below covers the sandbox
+resources and that Bundle, not this one). Units outside the UCUM list keep only the `unit` text (for example `[pH]` and the
+turbidity units): a unit code is never guessed.
+
 ## Official validation evidence
 
 Run `scripts/build_ig.py` then `scripts/validate_all_real.py` (official HL7 validator, FHIR 4.0.1,

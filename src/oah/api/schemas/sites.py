@@ -11,6 +11,25 @@ from oah.api.schemas.common import DataFreshnessModel, Origin, ParameterGroup, S
 SiteKind = Literal["water-body", "air-quality-station", "city", "other"]
 
 
+class FhirBundleEntry(BaseModel):
+    """One entry of the FHIR Bundle: its ``urn:uuid`` full URL and the resource itself (FHIR JSON, free-form by design)."""
+
+    fullUrl: str
+    resource: dict[str, Any]
+
+
+class FhirBundleResponse(BaseModel):
+    """``GET /sites/{id}/fhir``: a FHIR R4 collection Bundle of the measurements of one site (Location, Observations, Device,
+    Provenance). The FHIR resources are standard FHIR JSON, so only the Bundle envelope is typed here; see
+    ``docs/fhir_mapping.md`` (section "Site measurements export")."""
+
+    resourceType: Literal["Bundle"]
+    id: str
+    type: Literal["collection"]
+    meta: dict[str, Any] | None = None
+    entry: list[FhirBundleEntry]
+
+
 class Site(BaseModel):
     """One site on the map: a sandbox Location joined to its CCME result when computable, or a Waterbase site
     (``source`` ``real-eea-waterbase``, status ``measurements-only``, coordinates null when the file has none)."""

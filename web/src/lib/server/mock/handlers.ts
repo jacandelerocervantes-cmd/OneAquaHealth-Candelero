@@ -6,7 +6,7 @@ import { bathingList, bathingSamples } from "./routes/bathing";
 import { chat } from "./routes/chat";
 import { discharge, species, weather } from "./routes/external";
 import { qc, reliability, reviewQueue, risk } from "./routes/labs";
-import { indexFor, measurements, sites } from "./routes/sites";
+import { fhir, indexFor, measurements, sites } from "./routes/sites";
 
 export type { MockResult } from "./common";
 export { chat };
@@ -23,6 +23,7 @@ export function mockRoute(method: string, path: string, params: URLSearchParams,
   }
   if (a === "sites" && !b) return sites(params);
   if (a === "sites" && b && c === "measurements") return measurements(b, params);
+  if (a === "sites" && b && c === "fhir") return fhir(b, params);
   if (a === "sites" && b && c === "weather") return weather(b, params);
   if (a === "sites" && b && c === "discharge") return discharge(b, params);
   if (a === "sites" && b && c === "species") return species(b);

@@ -581,6 +581,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sites/{location_id}/fhir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Site Fhir
+         * @description The measurements of ONE site as a FHIR R4 collection Bundle in JSON (read-only; same selection as ``/measurements``).
+         *
+         *     The Bundle holds a ``Location``, one ``Observation`` per measurement that has a numeric value (the parameter is text
+         *     only: no code is invented; a UCUM unit code only where the unit is written the UCUM way), a software ``Device`` and a
+         *     ``Provenance`` naming the source and its attribution. Each resource carries the project-defined data-origin tag.
+         *     It does not claim conformance to the OneAquaHealth profiles. A selection without any numeric value is a 404.
+         *     See docs/fhir_mapping.md, section "Site measurements export".
+         */
+        get: operations["site_fhir_sites__location_id__fhir_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sites/{location_id}/measurements": {
         parameters: {
             query?: never;
@@ -2238,6 +2264,44 @@ export interface components {
             species_search_half_side_km: number;
             /** Taxa Discovered On */
             taxa_discovered_on: string;
+        };
+        /**
+         * FhirBundleEntry
+         * @description One entry of the FHIR Bundle: its ``urn:uuid`` full URL and the resource itself (FHIR JSON, free-form by design).
+         */
+        FhirBundleEntry: {
+            /** Fullurl */
+            fullUrl: string;
+            /** Resource */
+            resource: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * FhirBundleResponse
+         * @description ``GET /sites/{id}/fhir``: a FHIR R4 collection Bundle of the measurements of one site (Location, Observations, Device,
+         *     Provenance). The FHIR resources are standard FHIR JSON, so only the Bundle envelope is typed here; see
+         *     ``docs/fhir_mapping.md`` (section "Site measurements export").
+         */
+        FhirBundleResponse: {
+            /** Entry */
+            entry: components["schemas"]["FhirBundleEntry"][];
+            /** Id */
+            id: string;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Resourcetype
+             * @constant
+             */
+            resourceType: "Bundle";
+            /**
+             * Type
+             * @constant
+             */
+            type: "collection";
         };
         /** FindingsExportResponse */
         FindingsExportResponse: {
@@ -4951,6 +5015,82 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Rate limit exceeded (or too many failed key attempts); see Retry-After. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication not configured, or the data source is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    site_fhir_sites__location_id__fhir_get: {
+        parameters: {
+            query?: {
+                parameter?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                limit?: number;
+                group?: ("water-chemistry" | "solids-turbidity" | "organic-matter") | null;
+                resolution?: "annual" | "monthly";
+            };
+            header?: {
+                "x-api-key"?: string | null;
+            };
+            path: {
+                location_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FhirBundleResponse"];
+                };
+            };
+            /** @description Missing or invalid X-API-Key. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Rate limit exceeded (or too many failed key attempts); see Retry-After. */

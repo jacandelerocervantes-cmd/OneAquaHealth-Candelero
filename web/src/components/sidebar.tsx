@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { CatalogFamily, CatalogIndex, CatalogResponse, CountriesResponse } from "@/lib/api";
+import type { CatalogFamily, CatalogIndex, CatalogResponse, CountriesResponse, LanguagesResponse } from "@/lib/api";
 import { chatKey, useApp } from "@/lib/client/app-context";
 import { updateSettings, useSettings } from "@/lib/client/settings-store";
 import { useApi } from "@/lib/client/use-api";
 import { COUNTRY_NAMES, KIND_DOT, KIND_LABEL, USER_LABEL } from "@/lib/constants";
-import { countryName, useT } from "@/lib/i18n";
+import { countryName, languageShortLabel, useT } from "@/lib/i18n";
 import PlaceFinder from "./place-finder";
 import { Async, EmptyState, Notice } from "./ui";
 
@@ -41,6 +41,8 @@ export default function Sidebar() {
   const settings = useSettings();
   const t = useT();
   const countries = useApi<CountriesResponse>("/countries");
+  const languages = useApi<LanguagesResponse>("/languages");
+  const languageList = languages.status === "ready" ? languages.data.languages : [];
   const catalog = useApi<CatalogResponse>("/catalog", { country: settings.country, language: settings.language });
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
@@ -60,26 +62,52 @@ export default function Sidebar() {
 
   return (
     <nav aria-label={t("Main")} className="flex h-full w-72 flex-col gap-3 bg-sidebar px-3 py-3">
-      <div>
-        <label htmlFor="country" className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted">
-          {t("Country")}
-        </label>
-        <select
-          id="country"
-          data-testid="country-select"
-          value={settings.country}
-          onChange={(e) => {
-            app.setPlace(null); // a picked place belongs to the country it was picked in
-            updateSettings({ country: e.target.value });
-          }}
-          className="w-full rounded-lg border border-line bg-surface px-3 py-2"
-        >
-          {codes.map((code) => (
-            <option key={code} value={code}>
-              {countryName(code, settings.language, COUNTRY_NAMES)}
-            </option>
-          ))}
-        </select>
+      {/* The product name: a proper name, never translated. */}
+      <p data-testid="brand" className="px-1 text-lg font-semibold tracking-tight text-accent">
+        AquaLedger
+      </p>
+      <div className="grid grid-cols-[minmax(0,1fr)_5.5rem] gap-2">
+        <div>
+          <label htmlFor="country" className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted">
+            {t("Country")}
+          </label>
+          <select
+            id="country"
+            data-testid="country-select"
+            value={settings.country}
+            onChange={(e) => {
+              app.setPlace(null); // a picked place belongs to the country it was picked in
+              updateSettings({ country: e.target.value });
+            }}
+            className="w-full rounded-lg border border-line bg-surface px-3 py-2"
+          >
+            {codes.map((code) => (
+              <option key={code} value={code}>
+                {countryName(code, settings.language, COUNTRY_NAMES)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="language" className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted">
+            {t("Language")}
+          </label>
+          {/* Short codes keep the selector narrow; the full name of each language is its tooltip. */}
+          <select
+            id="language"
+            data-testid="language-select"
+            value={settings.language}
+            onChange={(e) => updateSettings({ language: e.target.value })}
+            className="w-full rounded-lg border border-line bg-surface px-2 py-2"
+          >
+            {languageList.length === 0 ? <option value={settings.language}>{languageShortLabel(settings.language)}</option> : null}
+            {languageList.map((l) => (
+              <option key={l.code} value={l.code} title={l.endonym}>
+                {languageShortLabel(l.code)}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <PlaceFinder />

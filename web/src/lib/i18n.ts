@@ -8,7 +8,7 @@ import { resolveLocale, translate, type Dict, type TFunction } from "@/lib/i18n-
  * Interface language hook. Dictionaries live in `src/lib/locales/<code>.json`, are loaded on demand and are
  * machine-drafted (docs/web_app_i18n.md). The 26 codes are the ones of the backend (`GET /languages`).
  */
-export { countryName, interpolate, msg, resolveLocale, intlTag, translate, translateEnglish } from "@/lib/i18n-core";
+export { countryName, interpolate, languageShortLabel, msg, resolveLocale, intlTag, translate, translateEnglish } from "@/lib/i18n-core";
 export type { Dict, Params, TFunction } from "@/lib/i18n-core";
 
 const LOADERS: Record<string, () => Promise<{ default: Dict }>> = {

@@ -5,7 +5,7 @@ import AppShell from "@/components/app-shell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "OneAquaHealth",
+  title: "AquaLedger",
   description: "Water-quality data with their origin and method next to every answer.",
 };
 

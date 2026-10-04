@@ -4465,6 +4465,72 @@
         "title": "ExternalStatusResponse",
         "type": "object"
       },
+      "FhirBundleEntry": {
+        "description": "One entry of the FHIR Bundle: its ``urn:uuid`` full URL and the resource itself (FHIR JSON, free-form by design).",
+        "properties": {
+          "fullUrl": {
+            "title": "Fullurl",
+            "type": "string"
+          },
+          "resource": {
+            "additionalProperties": true,
+            "title": "Resource",
+            "type": "object"
+          }
+        },
+        "required": [
+          "fullUrl",
+          "resource"
+        ],
+        "title": "FhirBundleEntry",
+        "type": "object"
+      },
+      "FhirBundleResponse": {
+        "description": "``GET /sites/{id}/fhir``: a FHIR R4 collection Bundle of the measurements of one site (Location, Observations, Device,\nProvenance). The FHIR resources are standard FHIR JSON, so only the Bundle envelope is typed here; see\n``docs/fhir_mapping.md`` (section \"Site measurements export\").",
+        "properties": {
+          "entry": {
+            "items": {
+              "$ref": "#/components/schemas/FhirBundleEntry"
+            },
+            "title": "Entry",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          },
+          "resourceType": {
+            "const": "Bundle",
+            "title": "Resourcetype",
+            "type": "string"
+          },
+          "type": {
+            "const": "collection",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resourceType",
+          "id",
+          "type",
+          "entry"
+        ],
+        "title": "FhirBundleResponse",
+        "type": "object"
+      },
       "FindingsExportResponse": {
         "properties": {
           "bundle_id": {
@@ -10689,6 +10755,200 @@
           }
         },
         "summary": "Sites"
+      }
+    },
+    "/sites/{location_id}/fhir": {
+      "get": {
+        "description": "The measurements of ONE site as a FHIR R4 collection Bundle in JSON (read-only; same selection as ``/measurements``).\n\nThe Bundle holds a ``Location``, one ``Observation`` per measurement that has a numeric value (the parameter is text\nonly: no code is invented; a UCUM unit code only where the unit is written the UCUM way), a software ``Device`` and a\n``Provenance`` naming the source and its attribution. Each resource carries the project-defined data-origin tag.\nIt does not claim conformance to the OneAquaHealth profiles. A selection without any numeric value is a 404.\nSee docs/fhir_mapping.md, section \"Site measurements export\".",
+        "operationId": "site_fhir_sites__location_id__fhir_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "location_id",
+            "required": true,
+            "schema": {
+              "title": "Location Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "parameter",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Parameter"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "water-chemistry",
+                    "solids-turbidity",
+                    "organic-matter"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Group"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resolution",
+            "required": false,
+            "schema": {
+              "default": "annual",
+              "enum": [
+                "annual",
+                "monthly"
+              ],
+              "title": "Resolution",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-api-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FhirBundleResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or invalid X-API-Key."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rate limit exceeded (or too many failed key attempts); see Retry-After."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication not configured, or the data source is unavailable."
+          }
+        },
+        "summary": "Site Fhir"
       }
     },
     "/sites/{location_id}/measurements": {

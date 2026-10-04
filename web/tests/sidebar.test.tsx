@@ -20,6 +20,42 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
+describe("brand", () => {
+  it("shows the product name at the top of the sidebar, in every language", async () => {
+    installProxyFetch();
+    renderWithApp(<Sidebar />);
+    expect(screen.getByTestId("brand")).toHaveTextContent("AquaLedger");
+    updateSettings({ language: "de" });
+    expect(await screen.findByRole("button", { name: "+ Neue Frage" })).toBeInTheDocument();
+    expect(screen.getByTestId("brand")).toHaveTextContent("AquaLedger");
+  });
+});
+
+describe("language selector in the sidebar", () => {
+  it("sits next to the country, offers the 26 languages as short codes with the full name as a tooltip", async () => {
+    installProxyFetch();
+    renderWithApp(<Sidebar />);
+    const select = screen.getByTestId("language-select");
+    await waitFor(() => expect(within(select).getAllByRole("option")).toHaveLength(26));
+    expect(select).toHaveValue("en");
+    const options = within(select).getAllByRole("option") as HTMLOptionElement[];
+    expect(options.map((o) => o.textContent)).toEqual(expect.arrayContaining(["EN", "IT", "FR", "ES-MX", "ES-ES", "NB"]));
+    expect(options.find((o) => o.value === "fr")?.title).toBe("Français");
+    expect(screen.getByTestId("country-select").parentElement?.parentElement).toBe(select.parentElement?.parentElement);
+  });
+
+  it("changes the language of the whole interface when another one is picked", async () => {
+    installProxyFetch();
+    renderWithApp(<Sidebar />);
+    const select = screen.getByTestId("language-select");
+    await waitFor(() => expect(within(select).getAllByRole("option")).toHaveLength(26));
+    expect(screen.getByRole("button", { name: "+ New question" })).toBeInTheDocument();
+    await userEvent.selectOptions(select, "es-MX");
+    expect(await screen.findByRole("button", { name: "+ Nueva pregunta" })).toBeInTheDocument();
+    expect(screen.getByLabelText("País")).toBeInTheDocument();
+  });
+});
+
 describe("visibleFamilies", () => {
   it("hides indices that do not apply and drops empty sections", () => {
     const no = buildCatalog("NO", "en");
