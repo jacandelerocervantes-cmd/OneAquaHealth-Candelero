@@ -1,0 +1,77 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "oneaquahealth"
+version = "0.1.0"
+description = "Portable and auditable pipeline for OneAquaHealth"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "fastapi==0.141.1",
+  "starlette==1.6.0",
+  "httpx==0.28.1",
+  "fhir.resources==8.2.0",
+  "pydantic==2.11.3",
+  "pyyaml==6.0.2",
+  "numpy==2.3.3",
+  "networkx==3.5",
+  "uvicorn==0.34.0",
+  "anthropic==1.7.0",
+  "tzdata==2026.4",  # IANA zone data (Windows has none); it changes often, review on every release
+]
+
+[project.optional-dependencies]
+dev = [
+  "hypothesis==6.131.9",
+  "pytest==9.0.3",
+  "pytest-cov==6.1.1",
+  "ruff==0.11.6",
+  "mypy==2.3.1",
+  "types-PyYAML==6.0.12.20260906",
+]
+
+[project.scripts]
+oah-verify-reference = "oah.verify_checksums:main"
+oah-extract-ig = "oah.extract_ig:main"
+oah-qc-report = "oah.qc.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/oah"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+# E/F/W: pycodestyle errors, pyflakes, pycodestyle warnings. E501 (line length) is ignored on purpose:
+# 400 existing long lines are a formatting matter, not a defect; line-length above is the target for new code.
+select = ["E", "F", "W"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src", "scripts", "tests"]
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = ["networkx", "networkx.*"]
+ignore_missing_imports = true  # networkx ships no type information
+
+[tool.coverage.run]
+source = ["src/oah"]
+
+[tool.coverage.report]
+# Measured 97 % on 2026-09-26 with the full suite; the gate leaves a two-point margin. Run:
+#   python -m pytest --cov --cov-report=term-missing   (coverage adds roughly 2x to the run time)
+fail_under = 95
+show_missing = true
+

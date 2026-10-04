@@ -1,0 +1,9 @@
+# Line endings. Only the files that Docker, a Linux shell or the CI runner executes are forced to LF: a CRLF in a
+# Dockerfile, a shell script or a workflow can break the build or the script on Linux (for example a carriage return
+# glued to a command or to a path). Nothing else is normalised here, so the rest of the repository keeps its current
+# endings and no history is rewritten; widen this file deliberately, in its own change, if that is ever wanted.
+Dockerfile text eol=lf
+deploy/** text eol=lf
+.github/** text eol=lf
+*.sh text eol=lf
+scripts/*.py text eol=lf

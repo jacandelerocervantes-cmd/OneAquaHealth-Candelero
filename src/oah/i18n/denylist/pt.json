@@ -1,0 +1,16 @@
+{
+  "language": "pt",
+  "best_effort": true,
+  "note": "Obvious potability and safety claim words only. Not reviewed by a native speaker.",
+  "patterns": [
+    "\\bpot\\u00e1ve(?:l|is)\\b",
+    "\\bbeb\\u00edve(?:l|is)\\b",
+    "\\b(?:segur[oa]s?|impr\\u00f3pri[oa]s?|apt[oa]s?)\\s+para\\s+(?:beber|o\\s+consumo|consumo|nadar|banho|o\\s+banho)\\b",
+    "\\b(?:\\u00e9|s\\u00e3o)\\s+(?:n\\u00e3o\\s+)?segur[oa]s?\\b",
+    "\\bcontaminad[oa]s?\\b",
+    "\\bt\\u00f3xic[oa]s?\\b",
+    "\\bnociv[oa]s?\\b",
+    "\\bprejudiciais?\\b",
+    "\\briscos?\\s+para\\s+a\\s+sa\\u00fade\\b"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "source_url": "https://sandbox.hl7europe.eu/oneaquahealth/fhir/Observation/Obs-Benevento01-Benzene-2018",
+  "retrieval_date_utc": "2026-09-21T18:22:15.288390+00:00",
+  "resource_type": "Observation",
+  "chosen_id": "Obs-Benevento01-Benzene-2018",
+  "sha256": "b633bdfd96a86d705362ae6a320068d73c1966f69f7b773046ff403641e8a16d",
+  "origin": "real-sandbox"
+}

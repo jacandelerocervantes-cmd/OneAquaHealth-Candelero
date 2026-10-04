@@ -1,0 +1,15 @@
+{
+  "language": "it",
+  "best_effort": true,
+  "note": "Obvious potability and safety claim words only. Not reviewed by a native speaker.",
+  "patterns": [
+    "\\bpotabil[ei]\\b",
+    "\\bbevibil[ei]\\b",
+    "\\b(?:sicur[oaei]|idone[aei])\\s+(?:da\\s+bere|per\\s+(?:il\\s+consumo|la\\s+balneazione|bere|nuotare)|al\\s+consumo)\\b",
+    "\\b(?:\\u00e8|sono)\\s+(?:non\\s+)?sicur[oaei]\\b",
+    "\\bcontaminat[oaei]\\b",
+    "\\btossic(?:o|a|i|he)\\b",
+    "\\bnociv[oaei]\\b",
+    "\\brischi[o]?\\s+per\\s+la\\s+salute\\b"
+  ]
+}

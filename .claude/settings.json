@@ -1,0 +1,40 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/hooks/block-destructive-bash.sh\"",
+            "shell": "bash",
+            "statusMessage": "Checking guardrails (destructive commands)..."
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/hooks/block-network-exposure.sh\"",
+            "shell": "bash",
+            "statusMessage": "Checking guardrails (network exposure)..."
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/hooks/protect-secrets.sh\"",
+            "shell": "bash",
+            "statusMessage": "Checking guardrails (secrets via shell commands)..."
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Edit|Write|NotebookEdit|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/hooks/protect-secrets.sh\"",
+            "shell": "bash",
+            "statusMessage": "Checking guardrails (secrets)..."
+          }
+        ]
+      }
+    ]
+  }
+}

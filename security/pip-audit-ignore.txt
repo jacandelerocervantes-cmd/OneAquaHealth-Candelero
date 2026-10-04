@@ -1,0 +1,14 @@
+# Vulnerabilities the dependency audit (CI job "dependency-audit", .github/workflows/ci.yml) is told to ignore.
+#
+# Policy: the audit FAILS on every known vulnerability of a pinned package. An advisory may be listed here only when
+# it was assessed and cannot be fixed by bumping the pin (no fixed release yet, or the vulnerable code path is not
+# reachable in this project). Every entry needs a written reason and a review-by date; the unit test
+# tests/unit/test_deploy_files.py rejects an entry without them. Remove the entry as soon as a fix is released.
+#
+# Format, one entry per line (blank lines and lines starting with # are ignored):
+#   <advisory ID> | <reason: package, why it does not apply or cannot be fixed, who assessed it> | review-by YYYY-MM-DD
+#
+# Example (not a real entry):
+#   GHSA-xxxx-xxxx-xxxx | somepackage 1.2.3: only the XML parser is affected and this project never parses XML | review-by 2027-01-31
+#
+# Current entries: none.

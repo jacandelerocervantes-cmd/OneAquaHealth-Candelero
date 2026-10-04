@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "note": "EXAMPLE ONLY: invented demonstration values, not a real regulation. Copy, edit, and point OAH_LIMITS_FILE at your copy (an absolute path outside the repository).",
+  "limits": [
+    {
+      "regime": "drinking",
+      "country": null,
+      "parameter": "Nitrate",
+      "values": [45.0],
+      "unit": "mg/L",
+      "source": "Example: a stricter national drinking-water value (replace with the real source)"
+    },
+    {
+      "regime": "surface",
+      "country": "XX",
+      "parameter": "Nitrate",
+      "values": [8.0],
+      "unit": "mg/L",
+      "source": "Example: river criterion of the fictional country XX"
+    },
+    {
+      "regime": "surface",
+      "country": "XX",
+      "parameter": "Dissolved Oxygen",
+      "values": [5.0],
+      "unit": "mg/L",
+      "source": "Example: minimum dissolved oxygen for rivers of XX"
+    },
+    {
+      "regime": "drinking",
+      "country": null,
+      "parameter": "pH",
+      "values": [6.0, 9.0],
+      "unit": "pH",
+      "source": "Example: a wider pH range"
+    }
+  ],
+  "location_countries": {
+    "Loc-Example-River": "XX"
+  },
+  "location_regimes": {
+    "Loc-Example-River": "surface"
+  }
+}

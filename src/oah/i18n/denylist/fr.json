@@ -1,0 +1,15 @@
+{
+  "language": "fr",
+  "best_effort": true,
+  "note": "Obvious potability and safety claim words only. Not reviewed by a native speaker.",
+  "patterns": [
+    "\\bpotables?\\b",
+    "\\bbuvables?\\b",
+    "\\b(?:s\\u00fbr|s\\u00fbre|s\\u00fbrs|s\\u00fbres|sans\\s+danger)\\s+(?:pour|\\u00e0)\\s+(?:boire|la\\s+consommation|se\\s+baigner|la\\s+baignade|nager)\\b",
+    "\\bimpropres?\\s+\\u00e0\\s+la\\s+consommation\\b",
+    "\\bcontamin\\u00e9(?:e|s|es)?\\b",
+    "\\btoxiques?\\b",
+    "\\bnocif(?:s|ve|ves)?\\b",
+    "\\brisques?\\s+pour\\s+la\\s+sant\\u00e9\\b"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "source_url": "https://sandbox.hl7europe.eu/oneaquahealth/fhir/Observation/Obs-Almyros-AluminiumDissolved-2013",
+  "retrieval_date_utc": "2026-09-21T18:22:15.248947+00:00",
+  "resource_type": "Observation",
+  "chosen_id": "Obs-Almyros-AluminiumDissolved-2013",
+  "sha256": "e9d873bbcd9ae8a0d0aacd354ec0ea515d44ae51a56b260d341192ea03771618",
+  "origin": "real-sandbox"
+}

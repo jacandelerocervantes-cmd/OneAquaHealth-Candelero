@@ -1,0 +1,8 @@
+{
+  "source_url": "https://sandbox.hl7europe.eu/oneaquahealth/fhir/Observation/Obs-BN-BN1-cholesterolemia-190-Female-Age-35-74",
+  "retrieval_date_utc": "2026-09-21T18:22:15.267485+00:00",
+  "resource_type": "Observation",
+  "chosen_id": "Obs-BN-BN1-cholesterolemia-190-Female-Age-35-74",
+  "sha256": "1786ce25e5a394411dab0ab4cc3b5fe976cef4a9b4bcbe007af0455c7416197e",
+  "origin": "real-sandbox"
+}

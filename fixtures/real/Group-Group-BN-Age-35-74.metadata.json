@@ -1,0 +1,8 @@
+{
+  "source_url": "https://sandbox.hl7europe.eu/oneaquahealth/fhir/Group/Group-BN-Age-35-74",
+  "retrieval_date_utc": "2026-09-21T18:22:15.297664+00:00",
+  "resource_type": "Group",
+  "chosen_id": "Group-BN-Age-35-74",
+  "sha256": "b488265ff9e794e531447f8df018ec039de8a6b048b8e1f1869b8cfddfaf2f11",
+  "origin": "real-sandbox"
+}

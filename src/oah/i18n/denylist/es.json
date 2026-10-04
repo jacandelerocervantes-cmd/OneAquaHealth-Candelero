@@ -1,0 +1,16 @@
+{
+  "language": "es",
+  "best_effort": true,
+  "note": "Obvious potability and safety claim words only. Shared by es-MX and es-ES. Not reviewed by a native speaker.",
+  "patterns": [
+    "\\bpotables?\\b",
+    "\\bbebibles?\\b",
+    "\\b(?:segur[oa]s?|apt[oa]s?|inocu[oa]s?)\\s+para\\s+(?:beber|el\\s+consumo|consumo|consumir|nadar|ba\\u00f1arse|el\\s+ba\\u00f1o)\\b",
+    "\\b(?:es|son|est\\u00e1|est\\u00e1n)\\s+(?:no\\s+)?segur[oa]s?\\b",
+    "\\bcontaminad[oa]s?\\b",
+    "\\bt\\u00f3xic[oa]s?\\b",
+    "\\bnociv[oa]s?\\b",
+    "\\bperjudicial(?:es)?\\b",
+    "\\briesgos?\\s+para\\s+la\\s+salud\\b"
+  ]
+}

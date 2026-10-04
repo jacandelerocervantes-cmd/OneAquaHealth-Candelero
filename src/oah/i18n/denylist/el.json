@@ -1,0 +1,15 @@
+{
+  "language": "el",
+  "best_effort": true,
+  "note": "Obvious potability and safety claim words only; Greek inflection makes this list incomplete by nature. Not reviewed by a native speaker. The plain adjective for drinking (as in 'drinking water') is deliberately not listed: drinking-water reference limits are named in the data.",
+  "patterns": [
+    "\\bμη\\s+πόσιμ\\w*",
+    "\\bακατάλληλ\\w*\\s+(?:για\\s+)?(?:πόση|κατανάλωση|κολύμβηση)",
+    "\\bασφαλ\\w*\\s+(?:για|προς)\\s+(?:πόση|κατανάλωση|κολύμβηση)",
+    "\\bείναι\\s+(?:μη\\s+)?ασφαλ\\w*",
+    "\\bμολυσμέν\\w*",
+    "\\bτοξικ\\w*",
+    "\\bεπιβλαβ\\w*",
+    "\\bκίνδυν\\w*\\s+(?:για\\s+την\\s+)?υγεία"
+  ]
+}

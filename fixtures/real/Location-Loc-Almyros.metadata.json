@@ -1,0 +1,8 @@
+{
+  "source_url": "https://sandbox.hl7europe.eu/oneaquahealth/fhir/Location/Loc-Almyros",
+  "retrieval_date_utc": "2026-09-21T18:22:15.257927+00:00",
+  "resource_type": "Location",
+  "chosen_id": "Loc-Almyros",
+  "sha256": "b858e3c92adf1effc225aadf5b8ba2a2f6ca64f721b0cff690952de540d56512",
+  "origin": "real-sandbox"
+}

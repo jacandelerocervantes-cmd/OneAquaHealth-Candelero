@@ -1,0 +1,15 @@
+{
+  "language": "de",
+  "best_effort": true,
+  "note": "Obvious potability and safety claim words only. Not reviewed by a native speaker. The compound 'Trinkwasser' is deliberately not listed: drinking-water reference limits are named in the data.",
+  "patterns": [
+    "\\b(?:nicht\\s+)?trinkbar(?:e|er|es|en|em)?\\b",
+    "\\bsicher\\s+(?:zum|f\\u00fcr)\\s+(?:trinken|baden|schwimmen|den\\s+verzehr)\\b",
+    "\\b(?:ist|sind)\\s+(?:nicht\\s+)?sicher\\b",
+    "\\bunbedenklich(?:e|er|es|en)?\\b",
+    "\\bkontaminiert(?:e|er|es|en)?\\b",
+    "\\bgiftig(?:e|er|es|en)?\\b",
+    "\\bsch\\u00e4dlich(?:e|er|es|en)?\\b",
+    "\\bgesundheits(?:gef\\u00e4hrdend|sch\\u00e4dlich)\\w*\\b"
+  ]
+}

@@ -1,0 +1,349 @@
+schema_version: 1
+policy:
+  adaptation: "Copy and rename into src/oah; do not import from source repositories."
+  source_access: "Read-only"
+  origins_base: OAH_SOURCES_ROOT
+  ownership: >-
+    Every "existing" origin is the project author's own unpublished work: local-only,
+    not in production, not complete, and not in any public repository. Provenance is
+    kept so each adapted module stays auditable and can be disclosed in the README.
+    This ownership statement covers only the "existing" origins above; it does not
+    cover the "reference" origin below, which is third-party material, or the two
+    Zenodo PDFs under reference/, which are CC-BY 4.0 licensed. See third_party_notices
+    for both.
+  third_party_notices:
+    - name: hl7-eu/oah (OneAquaHealth HL7 FHIR Implementation Guide)
+      source_url: https://github.com/hl7-eu/oah
+      stored_as: >-
+        Not stored any more. The archive (reference/oah-master.zip) and its extraction (ig/oah/) were
+        gitignored on 2026-09-27 and DELETED from the local disk on 2026-09-29 at the auditor's decision,
+        so that neither can reach a published repository. The project keeps depending on the guide (see
+        use_in_project) and cites it whether or not a copy exists locally. To rebuild or validate the
+        profiles again, download hl7-eu/oah from the source_url above and follow docs/environment_setup.md
+        ("Restoring ig/ and reference/").
+      use_in_project: >-
+        Read-only reference and source of definitions, not redistributed. Derived from it: (1) the profile
+        canonical URLs used to recognise and build Observations (src/oah/fhir/builders/observation.py,
+        src/oah/indices/water_parameter_limits.py, src/oah/fhir/validate.py); (2) the fast offline profile
+        checks in src/oah/fhir/validate.py, derived by hand from its FSH profiles (location-oah,
+        observation-with-component-oah, observation-indicators-oah, observation-health-measure-oah) and
+        documented in docs/fhir_mapping.md; (3) the temporary code system codes seen in the sandbox
+        (temporarySystem-oah-eu); (4) the build and official-validator scripts (scripts/build_ig.py,
+        scripts/validate_official.py), which need a local copy to run.
+      context_of_use: >-
+        The guide is presented to hackathon participants by its authors as "the open-source HL7 EU
+        repository" and its results as published "to foster reuse by other health-environmental
+        projects" (organisers' webinar of 2026-08-27, slides listed in the next notice). That context
+        supports using it as a reference for a hackathon project; it is not a licence, so the project
+        still does not redistribute it. The maintainers have been asked, or are to be asked, to declare
+        a licence (draft in docs/new_repository_checklist.md); until they do, treat the terms as
+        unconfirmed.
+      citation_rationale: >-
+        Using a specification or its definitions requires naming it, whatever the licence. Where a licence
+        exists (CC-BY) attribution is a condition of it. Where none is declared (this guide), the default is
+        that all rights stay with the authors: the project may read and reference it and must not
+        redistribute it, but it may not present derived constraints as its own work either. Deleting the
+        local copy removes the file, not the dependency: the code still names the guide's profile URLs and
+        carries constraints derived from its sources, so the citation stays. See
+        docs/third_party_dependencies.md.
+      license: >-
+        Not declared by the upstream repository as of 2026-09-21 (GitHub API reports
+        license: null; ig/oah/sushi-config.yaml carries a commented-out
+        "# license: CC0-1.0" line, which is a maintainer note, not a declared license).
+        Used read-only, unmodified, as the official hackathon-provided implementation
+        guide and public sandbox reference for the IEEE OneAquaHealth Global Hackathon
+        2026; not redistributed as, or relicensed under, any OneAquaHealth project
+        license. This project's own MIT LICENSE does not apply to this archive's
+        contents.
+    - name: "OneAquaHealth Key Indicators of Ecosystem and Biological Health — Factsheets Collection"
+      source_url: https://doi.org/10.5281/zenodo.20345207
+      stored_as: >-
+        reference/FactSheets_Combined_zenodo_final_mjf.pdf. Gitignored as of 2026-09-27
+        alongside the rest of reference/ (see the hl7-eu/oah entry above); properly
+        licensed CC-BY-4.0, present on disk, but not tracked in git. Re-download from
+        the DOI above if missing and verify against reference/CHECKSUMS.sha256.
+      license: CC-BY-4.0
+      attribution: "OneAquaHealth Consortium (2026), Horizon Europe Grant Agreement 101086521."
+    - name: "OneAquaHealth Field Sampling Protocols for Urban Stream Ecosystems"
+      source_url: https://doi.org/10.5281/zenodo.20344421
+      stored_as: >-
+        reference/Field_Sampling_protocols_OAH_zenodo_final_mjf.pdf. Gitignored as of
+        2026-09-27 alongside the rest of reference/; properly licensed CC-BY-4.0,
+        present on disk, but not tracked in git. Re-download from the DOI above if
+        missing and verify against reference/CHECKSUMS.sha256.
+      license: CC-BY-4.0
+      attribution: "OneAquaHealth Consortium (2026), Horizon Europe Grant Agreement 101086521."
+    - name: "Waterbase - Water Quality ICM, 2026"
+      source_url: https://sdi.eea.europa.eu/data/82e194cc-2506-411c-b341-9eb50b6ad5e0
+      stored_as: >-
+        gs://<PRIVATE_BUCKET>/waterbase/2026/eea_t_waterbase-water-quality-icm-2026_p_1900-2025_v01_r00.zip
+        (4,573,371,134 bytes; CRC32C 9RX8dA==, independently re-verified 2026-09-28 by
+        re-downloading the object from the bucket and re-hashing, matching the value GCS
+        recorded at upload time). Not in this repository. A second copy was downloaded
+        on 2026-10-02 to the local data folder outside the repository (size and SHA-256
+        verified against the published .sha256 file). Since 2026-10-02 it is consumed by
+        src/oah/waterbase/ and scripts/build_waterbase_store.py, which build a small
+        derived SQLite store (annual aggregates for Greece, Italy and Norway; filters in
+        docs/waterbase_store.md). Earlier retrieval was for the threshold-registry effort
+        (see docs/unvalidated_values_register.md section 3a and docs/handoff/LEDGER.md,
+        entries dated 2026-09-26/27/28). Citation identifier:
+        eea_t_waterbase-water-quality-icm-2026_p_1900-2025_v01_r00. Temporal extent:
+        1900-01-01 to 2025-12-31.
+      license: CC-BY-4.0
+      attribution: "European Environment Agency (EEA)."
+    - name: "Waterbase - Water Quality ICM, 2024"
+      source_url: https://sdi.eea.europa.eu/data/77976729-1aeb-4b61-a673-83db6c6a2ab2
+      stored_as: >-
+        gs://<PRIVATE_BUCKET>/waterbase/2024/eea_t_waterbase-water-quality-icm-3_p_1900-2024_v01_r00.zip
+        (54,039,607,730 bytes; CRC32C pqKxjw==, independently re-verified 2026-09-28 by
+        re-downloading the object from the bucket and re-hashing, matching the value GCS
+        recorded at upload time). Not in this repository or OAH_DATA_DIR; lives only in
+        this GCP bucket. Marked "Superseded" by the 2026 edition on the EEA catalogue,
+        which is expected (both editions were requested deliberately -- 2024 ships its
+        large tables as raw, uncompressed CSV/SQLite; 2026 ships the same tables as nested
+        pre-compressed zips, which is why the two editions differ roughly twelvefold in
+        packaged size despite covering comparable data). Not yet consumed by any code in
+        src/oah/ -- retrieved for the threshold-registry effort (see
+        docs/unvalidated_values_register.md section 3a and docs/handoff/LEDGER.md,
+        entries dated 2026-09-26/27/28). Citation identifier:
+        eea_t_waterbase-water-quality-icm-3_p_1900-2024_v01_r00. Temporal extent:
+        1900-01-01 to 2024-12-31.
+      license: CC-BY-4.0
+      attribution: "European Environment Agency (EEA)."
+    - name: "Bathing Water Directive - Status of bathing water, 2025 v.1.0"
+      source_url: https://sdi.eea.europa.eu/data/070d9baa-448d-4168-8514-7dadb3ad876d
+      stored_as: >-
+        Local data folder outside the repository (archive
+        eea_t_bathing-water-status_p_1990-2025_v01_r00.zip, about 43 MB, downloaded
+        2026-10-02 from the EEA data share link on the dataset page; ZIP integrity checked).
+        Consumed by src/oah/bathing/ and scripts/build_bathing_water_store.py, which keep
+        Greece and Italy (the file has no Norwegian rows). It holds only the per-season
+        classification of each bathing water, not E. coli or intestinal enterococci
+        concentrations. Publication date on the EEA page: 2026-06-02. Temporal extent:
+        1990-2025. See docs/bathing_water_store.md.
+      license: >-
+        EEA content is CC-BY-4.0 per the EEA legal notice; the dataset page itself does not
+        restate a licence (inferred, to be confirmed).
+      attribution: "European Environment Agency (EEA), Bathing Water Directive status of bathing water, 2025 v.1.0."
+    - name: "Bathing Water Directive - monitoring results (EEA Discodata, WISE_BWD timeseries_MonitoringResult)"
+      source_url: https://discodata.eea.europa.eu/
+      stored_as: >-
+        Derived SQLite store outside the repository (one row per sample, Greece and Italy, 754,451 rows), built on 2026-10-03
+        by scripts/build_bathing_samples_store.py from the public read-only SQL endpoint
+        https://discodata.eea.europa.eu/sql (table [WISE_BWD].[latest].[timeseries_MonitoringResult], observed on 2026-10-03
+        to be a view of release v5r1). Consumed by src/oah/bathing_samples/. It holds the individual E. coli and intestinal
+        enterococci results in cfu/100ml (unit taken from the Discodata table metadata), with the EEA status columns kept as
+        written; no threshold, limit or classification is applied. Seasons 2008-2024 (Greece, written EL, stored GR) and
+        2010-2024 (Italy); Norway has no row. See docs/bathing_samples_store.md.
+      license: >-
+        EEA content is CC-BY-4.0 per the EEA legal notice; the Discodata pages themselves do not restate a licence (inferred,
+        to be confirmed).
+      attribution: "European Environment Agency (EEA), Bathing Water Directive monitoring results via Discodata."
+    - name: "Open-Meteo Historical Weather API (ERA5 reanalysis) - external weather context"
+      source_url: https://open-meteo.com/en/docs/historical-weather-api
+      stored_as: >-
+        Not stored. Requested live by the backend only (never by a browser), one GET per question at
+        https://archive-api.open-meteo.com/v1/archive with models=era5 and the daily variables precipitation_sum and
+        temperature_2m_mean, behind a TTL cache and a call budget; only the parsed monthly aggregates are held in memory.
+        Consumed by src/oah/external/openmeteo.py. The values are MODELLED reanalysis for a 0.25 degree grid cell, not
+        measurements at the site. Pages read 2026-10-03 (terms, licence, pricing, the historical weather API page). See
+        docs/external_context.md.
+      license: >-
+        API data under CC BY 4.0 (open-meteo.com/en/licence, read 2026-10-03); the free API is for non-commercial use with fewer
+        than 10,000 calls per day, 5,000 per hour and 600 per minute (open-meteo.com/en/terms). Commercial use needs a paid plan.
+        The ERA5 data are Copernicus Climate Change Service information; the wording of that licence was not read.
+      attribution: >-
+        "Weather data by Open-Meteo.com" as a link to https://open-meteo.com/ next to any displayed value (the link text the licence
+        page requires), and "Generated using Copernicus Climate Change Service information" with the ERA5 citation (Hersbach et al.,
+        2023, https://doi.org/10.24381/cds.adbb2d47) as the Open-Meteo page gives them. Whether this wording meets the C3S licence is
+        UNVERIFIED.
+    - name: "Global Flood Awareness System (GloFAS) v4 river discharge, through the Open-Meteo Flood API - external discharge context"
+      source_url: https://open-meteo.com/en/docs/flood-api
+      stored_as: >-
+        Not stored. Requested live by the backend only at https://flood-api.open-meteo.com/v1/flood with models=consolidated_v4 and
+        the daily variable river_discharge, behind a TTL cache and a call budget. Consumed by src/oah/external/openmeteo.py. The
+        values are MODELLED discharge of the nearest river cell of a 0.05 degree grid, not a gauge reading, and the cell may not be
+        the river of the site. The page documents the reanalysis history as 1984 to July 2022; the consolidated model was observed on
+        2026-10-03 to return later dates too (a value for 2025-01-10 and none for 2025-07-10 at one test cell), so the end of the data is read
+        from each answer. See
+        docs/external_context.md.
+      license: >-
+        Open-Meteo API data under CC BY 4.0. GloFAS is a Copernicus Emergency Management Service product with its own licence, which the
+        Open-Meteo licence page links to; that link returned 404 on 2026-10-03, so the licence text and its credit wording were NOT
+        read (UNVERIFIED). The project is a non-commercial demo; check the CEMS terms before any public or commercial use.
+      attribution: >-
+        UNVERIFIED wording. The responses show "River discharge: GloFAS (Copernicus Emergency Management Service), provided through
+        Open-Meteo.com" together with "Weather data by Open-Meteo.com" and mark attribution_verified as false.
+    - name: "GBIF occurrence search (api.gbif.org) - external species records"
+      source_url: https://www.gbif.org/developer/occurrence
+      stored_as: >-
+        Not stored. Requested live by the backend only: GET https://api.gbif.org/v1/occurrence/search (a WKT square of half side 5 km
+        around a site, taxonKey for seven discovered taxon groups) and GET https://api.gbif.org/v1/dataset/{key} for the dataset
+        citation, behind a TTL cache and a call budget; the taxon keys are in src/oah/external/data/gbif_taxa.json with the match
+        confidence and the date of discovery (2026-10-03, species/match). Consumed by src/oah/external/gbif.py. The records are
+        OPPORTUNISTIC observations, not monitoring. See docs/external_context.md.
+      license: >-
+        Per record, as GBIF provides it: CC0 1.0, CC BY 4.0 or CC BY-NC 4.0 (non-commercial use only). The record licence, dataset key,
+        publisher key, institution code, rights holder and the dataset citation text are passed on with every record; the observer's
+        name is not. The GBIF terms pages were not read in full (UNVERIFIED); read access without a key was observed on 2026-10-03.
+      attribution: >-
+        "Occurrence records from GBIF.org" with the dataset citation of each record as GBIF provides it (for example "iNaturalist
+        contributors, iNaturalist (2026). iNaturalist Research-grade Observations. ... accessed via GBIF.org on 2026-10-03"). The exact
+        GBIF citation requirements are UNVERIFIED.
+    - name: "EU legal acts used as the source of numeric limits (EUR-Lex)"
+      source_url: https://eur-lex.europa.eu
+      stored_as: >-
+        Not stored in this repository. Read from local copies kept outside it (the documents
+        were supplied by the project auditor): Directive (EU) 2020/2184 (CELEX 32020L2184),
+        Directive 2013/39/EU (32013L0039), Directive 2008/105/EC (32008L0105), Directive
+        2006/118/EC (32006L0118), Directive 2006/44/EC and Directive 2000/60/EC (Spanish
+        language versions). SHA-256 values of each file are recorded in
+        docs/unvalidated_values_register.md sections 10 and 11. Only numeric values with a
+        citation are reproduced in code and documentation, with the article or annex reference.
+      license: >-
+        Reuse authorised with acknowledgement of the source. Checked 2026-09-29: the European Commission
+        legal notice (https://commission.europa.eu/legal-notice_en) states that, unless otherwise
+        indicated, EU content is reusable under CC BY 4.0 (appropriate credit, changes indicated) under
+        Commission Decision 2011/833/EU on the reuse of Commission documents, whose conditions are to
+        acknowledge the source, not to distort the original meaning and no liability of the Commission;
+        third-party works, private individuals' data and industrial-property signs are excluded. Limits
+        of this check: the EUR-Lex pages are script-rendered and could not be read directly, and the
+        Decision is written for Commission documents and those the Publications Office issues on its
+        behalf; the Council and Parliament acts used here are published by that Office in the Official
+        Journal. Consolidated versions (Directive 2006/44/EC, dated 11.12.2008) are documentation tools
+        without legal effect: cite the Official Journal text for legal use. The project reproduces only
+        numeric values and short attributed statements. This is a reading of public notices, not legal advice.
+      attribution: "European Union, https://eur-lex.europa.eu (Official Journal of the European Union)."
+    - name: "Italian DM 8 November 2010 n. 260 and D.Lgs. 13 October 2015 n. 172 (Gazzetta Ufficiale)"
+      source_url: https://www.gazzettaufficiale.it
+      stored_as: >-
+        Not stored in this repository. Official texts read from the Gazzetta Ufficiale (GU n. 30
+        of 7-2-2011, Suppl. ordinario n. 31/L; GU n. 250 of 27-10-2015) and two republications
+        (FAOLEX, ARPA Campania) kept outside the repository; SHA-256 values in
+        docs/unvalidated_values_register.md sections 13 to 15. Reproduced: the LIMeco thresholds
+        (Tab. 4.1.2/a) as numeric values with their conversion to ions, and the statement that
+        temperature is not a classification parameter.
+      license: >-
+        Free reproduction. Checked 2026-09-29: (1) article 5 of Law 22 April 1941 n. 633 states that the
+        law's provisions "non si applicano ai testi degli atti ufficiali dello stato e delle amministrazioni
+        pubbliche" (they do not apply to the texts of official acts of the State and public administrations),
+        so the texts of DM 260/2010 and D.Lgs. 172/2015 are not protected by copyright; (2) the Gazzetta
+        Ufficiale home page states that reproduction of the electronic texts is permitted provided the source,
+        their non-authentic character and their free nature are mentioned. Only the printed Gazzetta is
+        authentic, so numeric values must be checked against it before any legal use. The FAOLEX and ARPA
+        Campania republications were used to read the text only. This is a reading of public notices and the
+        statute, not legal advice.
+      attribution: "Repubblica Italiana, Gazzetta Ufficiale della Repubblica Italiana."
+    - name: "Hellenic Water Quality Index class boundaries (Skoulikidis et al., Water 2022, 14, 2738)"
+      source_url: https://doi.org/10.3390/w14172738
+      stored_as: >-
+        Not stored in this repository. Table 1 of the article was read in the publisher's page on
+        2026-09-29 and its numeric class boundaries are reproduced in src/oah/indices/regimes.py
+        and docs/unvalidated_values_register.md section 17 with attribution. The JMD 140384/2011
+        (Government Gazette 2017/B, 9.9.2011) only sets up the monitoring network and contains no
+        numeric boundaries.
+      license: >-
+        CC-BY-4.0. Checked 2026-09-29 on the article page: "(c) 2022 by the authors. Licensee MDPI, Basel,
+        Switzerland. This article is an open access article distributed under the terms and conditions of the
+        Creative Commons Attribution (CC BY) license (https://creativecommons.org/licenses/by/4.0/)."
+        Reuse, including the class boundaries of Table 1, is allowed with attribution and an indication of
+        changes (the boundaries are converted here from mg/L as N and ug/L as P to the ions, which is stated
+        in docs/math_registry.md).
+      attribution: "Skoulikidis, N. et al. (2022), Water 14(17), 2738, https://doi.org/10.3390/w14172738; Hellenic Centre for Marine Research (HCMR) HWQI."
+    - name: "CCME Water Quality Index 1.0 (Technical Report)"
+      source_url: https://ccme.ca
+      stored_as: >-
+        Not stored. The F1, F2 and F3 formulas are implemented in src/oah/indices/water_quality.py
+        and documented in docs/math_registry.md; no text of the report is reproduced.
+      license: >-
+        Formulas and method cited, not copied text. Terms of the CCME publication NOT verified.
+      attribution: "Canadian Council of Ministers of the Environment (2001), Canadian Water Quality Index 1.0: Technical Report, Winnipeg."
+    - name: "OneAquaHealth hackathon webinar slides (sessions 3 and 4)"
+      source_url: https://www.oneaquahealth.eu/
+      stored_as: >-
+        OneAquaHealth_hackathon_session_3_0.1.pdf and OneAquaHealth_hackathon_session_4_Aug27-2026.pdf, kept
+        in the project folder but gitignored as of 2026-09-29 (they were tracked in the first local commit and
+        are removed from the index). Not redistributed from this repository.
+      license: >-
+        Not stated in the slides. Third-party material of the hackathon organisers (HL7 Europe, SYNYO GmbH, IEEE).
+        Cited as evidence of the project context and of the intended reuse of the implementation guide; nothing
+        from them is reproduced beyond short attributed statements.
+      attribution: "OneAquaHealth consortium, HL7 Europe, SYNYO GmbH and IEEE, hackathon webinars (2026)."
+sources:
+  - destination: uncertainty
+    origins:
+      - MunichTech EXPO AI-Powered Clinical Triage Assistant/AI CLINICAL TRIAGE
+    origin_type: existing
+    adaptation: conformal and calibration
+    new_name: oah.uncertainty
+    status: planned
+  - destination: review
+    origins:
+      - MunichTech EXPO AI-Powered Clinical Triage Assistant/AI CLINICAL TRIAGE
+    origin_type: existing
+    adaptation: human review queue and overrides
+    new_name: oah.review
+    status: planned
+  - destination: audit
+    origins:
+      - MunichTech EXPO AI-Powered Clinical Triage Assistant/AI CLINICAL TRIAGE
+    origin_type: existing
+    adaptation: audit events
+    new_name: oah.audit
+    status: planned
+  - destination: fhir
+    origins:
+      - HSELITH-HUMAN DIGITAL TWIN/HDT-STACK
+      - MunichTech EXPO AI-Powered Clinical Triage Assistant/AI CLINICAL TRIAGE
+    origin_type: existing
+    adaptation: structural reference only; profiles from ig/oah
+    new_name: oah.fhir
+    status: planned
+  - destination: privacy
+    origins:
+      - AgroSelith/agroselith-ecosystem
+    origin_type: existing
+    adaptation: k-anonymity and consent
+    new_name: oah.privacy
+    status: planned
+  - destination: api
+    origins:
+      - Visor_Civico/visor-civico-mx
+      - Bio_Stelith-BIOPROCESOS/BIO-STELITH/piece-b-core
+      - HSelith_MVA-GENOMICA SOF/hselith-mva-pipeline/piece-c-pipelines
+    origin_type: existing
+    adaptation: staged structure and rate limiting
+    new_name: oah.api
+    status: planned
+  - destination: risk
+    origins:
+      - AgroSelith/agroselith-ecosystem
+    origin_type: existing
+    adaptation: bounded-variable anamorphosis
+    new_name: oah.risk
+    status: planned
+  - destination: indices
+    origins: []
+    origin_type: new
+    adaptation: ASPT/BMWP, diversity, CCME WQI, Chao1
+    new_name: oah.indices
+    status: planned
+  - destination: reliability
+    origins: []
+    origin_type: new
+    adaptation: Dawid-Skene and observer reliability
+    new_name: oah.reliability
+    status: planned
+  - destination: ingest
+    origins: []
+    origin_type: reference
+    reference_archive: reference/oah-master.zip
+    adaptation: read-only sandbox client and _samples loaders
+    new_name: oah.ingest
+    status: adapted
+  - destination: qc
+    origins: []
+    origin_type: new
+    adaptation: statistical coherence, physical ranges, and UCUM units
+    new_name: oah.qc
+    status: adapted

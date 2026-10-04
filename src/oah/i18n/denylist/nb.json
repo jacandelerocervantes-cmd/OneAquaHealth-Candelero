@@ -1,0 +1,14 @@
+{
+  "language": "nb",
+  "best_effort": true,
+  "note": "Obvious potability and safety claim words only. Not reviewed by a native speaker.",
+  "patterns": [
+    "\\b(?:ikke\\s+)?drikkbar\\w*",
+    "\\b(?:trygg|trygt|sikker|sikkert)\\s+(?:\\u00e5|for\\s+\\u00e5|til\\s+\\u00e5)\\s+(?:drikke|bade|sv\\u00f8mme)\\b",
+    "\\ber\\s+(?:ikke\\s+)?(?:trygg|trygt|sikker|sikkert)\\b",
+    "\\bforurense[dt]\\w*",
+    "\\bgiftig\\w*",
+    "\\bskadelig\\w*",
+    "\\bhelsefare\\w*"
+  ]
+}

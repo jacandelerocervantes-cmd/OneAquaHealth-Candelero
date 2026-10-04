@@ -1,0 +1,171 @@
+# Cloud Run service definition (Knative format) for the OneAquaHealth backend. docs/deployment.md is the runbook.
+#
+# Placeholders in angle brackets are replaced in a COPY of this file (never in the committed one):
+#   <PROJECT_ID>, <REGION>, <REPOSITORY>, <TAG>, <VERCEL_ORIGIN>, <CONTACT_URL>.
+# No secret value belongs here: the two secrets are references to Secret Manager entries, by name only.
+#
+# Deploy with: gcloud run services replace <rendered copy> --region <REGION> --project <PROJECT_ID>
+#
+# Single-instance design (min = max = 1): the rate limiter, the daily LLM caps and the response caches live in process
+# memory (the audit hash chain too: its records are ALSO written to standard output, where Cloud Logging keeps them),
+# so a second instance would split every counter and double every budget, and a
+# scale-to-zero instance would lose them and cold-start the three baked-in stores (about 260 MiB). See "Single instance" in the runbook.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: oah-backend
+  labels:
+    cloud.googleapis.com/location: <REGION>
+  annotations:
+    # The web app calls this service from Vercel's servers over the public internet, so internal-only ingress is
+    # not possible. The application itself refuses every route except /health without the shared X-API-Key.
+    run.googleapis.com/ingress: all
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "1"
+        # Second generation: a full Linux environment (faster file access for the SQLite stores). The slower cold
+        # start does not matter with one warm instance.
+        run.googleapis.com/execution-environment: gen2
+        # CPU only while a request is being processed. Counters, caches and the audit log are updated inside requests.
+        # The sandbox cache warm-up (start-up) and its refresh thread are the only background work: a refresh makes
+        # progress while requests are being served, which is acceptable (see "Sandbox cache" in the runbook). Always-on
+        # CPU would be billed for little.
+        run.googleapis.com/cpu-throttling: "true"
+        # Extra CPU during start-up only (imports and the first reads).
+        run.googleapis.com/startup-cpu-boost: "true"
+    spec:
+      # A dedicated service account with NO project roles; its only permission is to read the two secrets below
+      # (granted on each secret, not on the project).
+      serviceAccountName: oah-backend-run@<PROJECT_ID>.iam.gserviceaccount.com
+      # 20 requests at once. The routes are synchronous functions run by the server's thread pool (40 threads by
+      # default); staying below it means a request never waits invisibly in that pool. The chat and explanation
+      # paths are I/O bound (waiting for the model) and are limited to a few per minute anyway.
+      containerConcurrency: 20
+      # Longer than the longest legitimate request: the chat loop stops starting model calls after 45 s but lets a
+      # tool step in flight finish, and the translation call adds up to 30 s. A tool step that reaches an external
+      # provider is bounded by OAH_EXTERNAL_TIMEOUT_SECONDS (5 s) x 3 attempts per call, and the provider's circuit
+      # breaker opens after 3 consecutive failed calls, so a hanging provider adds at most about 60 s on top of the
+      # 45 s, plus the 30 s translation: about 140 s in the worst stacked case, nominally far less. 150 s covers it.
+      # Keep the Vercel function's maximum duration at least this long too (docs/deployment.md).
+      timeoutSeconds: 150
+      containers:
+        - name: oah-backend
+          image: <REGION>-docker.pkg.dev/<PROJECT_ID>/<REPOSITORY>/oah-backend:<TAG>
+          ports:
+            - name: http1
+              containerPort: 8080
+          resources:
+            limits:
+              cpu: "1"
+              # 2 GiB, sized conservatively (docs/deployment.md, "Memory"): three baked-in stores of about 260 MiB
+              # together (whether Cloud Run counts the image layers against this limit was NOT verified), the
+              # in-memory filesystem under /data/runtime, the Python process and the transient rows of a whole-country
+              # period comparison (bounded at 2,000,000 monthly rows). Measure after deploy and adjust.
+              memory: 2Gi
+          env:
+            # Secrets: references only. The values live in Secret Manager.
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: oah-anthropic-api-key
+                  key: latest
+            - name: OAH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: oah-api-key
+                  key: latest
+            # Writable, in-memory and ephemeral: audit log files, review database, exports. Lost on every restart; the
+            # audit digests are also written to standard output, where Cloud Logging keeps them.
+            - name: OAH_DATA_DIR
+              value: /data/runtime
+            # The only browser origin allowed by CORS (the Vercel site). The browser talks to Vercel's same-origin
+            # route handlers, not to this service, so this is defence in depth.
+            - name: OAH_CORS_ORIGINS
+              value: <VERCEL_ORIGIN>
+            - name: OAH_LLM_MODEL
+              value: claude-sonnet-5-5
+            - name: OAH_DEFAULT_LANGUAGE
+              value: en
+            # General per-client limit. Behind Cloud Run every request arrives from Google's front end, and
+            # OAH_TRUSTED_PROXIES is deliberately unset (see the runbook), so ALL callers share one bucket (per
+            # distinct peer address): sized for the whole demo, not for one person.
+            - name: OAH_RATE_LIMIT_MAX_REQUESTS
+              value: "240"
+            - name: OAH_RATE_LIMIT_WINDOW_SECONDS
+              value: "60"
+            # Spend controls for the model: process-wide, so they are global for the demo (the defaults, made explicit).
+            - name: OAH_CHAT_DAILY_CAP
+              value: "100"
+            - name: OAH_CHAT_RATE_LIMIT_PER_MINUTE
+              value: "5"
+            - name: OAH_CHAT_MAX_STEPS
+              value: "6"
+            - name: OAH_CHAT_TIMEOUT_SECONDS
+              value: "45"
+            - name: OAH_TRANSLATION_TIMEOUT_SECONDS
+              value: "30"
+            - name: OAH_EXPLAIN_DAILY_CAP
+              value: "100"
+            - name: OAH_EXPLAIN_RATE_LIMIT_PER_MINUTE
+              value: "5"
+            - name: OAH_EXPLAIN_CACHE_TTL_SECONDS
+              value: "600"
+            # External context (docs/external_context.md section 4, docs/deployment.md "Outbound network"): outbound
+            # https to archive-api.open-meteo.com, flood-api.open-meteo.com and api.gbif.org. Cloud Run allows egress by
+            # default. Set OAH_EXTERNAL_ENABLED to "false" if egress is restricted: every other feature keeps working.
+            # Budgets and caches are PER INSTANCE (this service runs exactly one).
+            - name: OAH_EXTERNAL_ENABLED
+              value: "true"
+            - name: OAH_EXTERNAL_OPEN_METEO_ENABLED
+              value: "true"
+            - name: OAH_EXTERNAL_GLOFAS_ENABLED
+              value: "true"
+            - name: OAH_EXTERNAL_GBIF_ENABLED
+              value: "true"
+            # A contact PAGE of the maintainer's choosing (https, no credentials, query or fragment), sent in the
+            # User-Agent so a provider can reach the operator. Never a personal e-mail address.
+            - name: OAH_CONTACT_URL
+              value: <CONTACT_URL>
+            # 5 s per request (code default 8, ceiling 20): with 2 retries a failing call costs at most about 16 s, which
+            # keeps timeoutSeconds above.
+            - name: OAH_EXTERNAL_TIMEOUT_SECONDS
+              value: "5"
+            - name: OAH_EXTERNAL_CACHE_TTL_SECONDS
+              value: "3600"
+            - name: OAH_EXTERNAL_CACHE_SIZE
+              value: "256"
+            # Budgets: the code defaults, made explicit. Open-Meteo is counted in estimated call units (the free tier
+            # allows 600 per minute and 10,000 per day, and is for non-commercial use); GBIF in requests (self-imposed
+            # courtesy limits). Lower them, never raise them, unless the providers' terms were re-read.
+            - name: OAH_EXTERNAL_OPEN_METEO_PER_MINUTE
+              value: "200"
+            - name: OAH_EXTERNAL_OPEN_METEO_DAILY
+              value: "3000"
+            - name: OAH_EXTERNAL_GBIF_PER_MINUTE
+              value: "30"
+            - name: OAH_EXTERNAL_GBIF_DAILY
+              value: "1500"
+            # Deliberately NOT set: OAH_TRUSTED_PROXIES (fail-safe, see the runbook), OAH_TRUSTED_PROXY_HOPS (off until
+            # the real number of proxies in front of the service is verified), OAH_ENABLE_WRITE_ROUTES (the review
+            # decision and FHIR export routes answer 404), OAH_ENABLE_DOCS (the interactive
+            # docs and the OpenAPI route stay off), OAH_INSECURE_NO_AUTH (never on a reachable host: on Cloud Run the
+            # service refuses to start with it, and also refuses an OAH_API_KEY shorter than 32 characters),
+            # OAH_TRANSLATION_MODEL (unset: translation uses OAH_LLM_MODEL), and OAH_WATERBASE_STORE /
+            # OAH_BATHING_WATER_STORE / OAH_BATHING_SAMPLES_STORE (the image sets them to its baked-in stores).
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            timeoutSeconds: 3
+            periodSeconds: 5
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            timeoutSeconds: 3
+            periodSeconds: 30
+            failureThreshold: 3

@@ -1,0 +1,67 @@
+name: Deploy checks
+
+# Checks of the deployment package. No secrets and no cloud credentials are used or needed: nothing is pushed,
+# nothing is deployed. The image is built with three TINY SYNTHETIC stores generated in the job (never real data).
+# This workflow had not run when it was last edited; its steps are written, not yet observed.
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-files:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-lock.txt
+
+      - name: Install the pinned dependencies
+        run: |
+          python -m pip install --require-hashes -r requirements-lock.txt
+          python -m pip install --no-deps -e .
+
+      - name: Static deployment tests (service file parses, no secret-looking values, limits, variable names, guard hooks)
+        # test_guard_hooks.py needs bash and jq (both are preinstalled on ubuntu-latest) and skips itself when either is missing.
+        run: python -m pytest -q tests/unit/test_deploy_files.py tests/unit/test_stage_deploy_stores.py tests/unit/test_container_scripts.py tests/unit/test_guard_hooks.py
+
+      - name: OpenAPI schema is up to date
+        run: python scripts/export_openapi.py --check
+
+      - name: Generate tiny synthetic stores and stage them (outside the repository)
+        run: |
+          python scripts/make_synthetic_stores.py --output "$RUNNER_TEMP/synthetic"
+          OAH_WATERBASE_STORE="$RUNNER_TEMP/synthetic/work_waterbase/waterbase_icm_2026.sqlite" \
+          OAH_BATHING_WATER_STORE="$RUNNER_TEMP/synthetic/work_bathing/bathing_water_2025.sqlite" \
+          OAH_BATHING_SAMPLES_STORE="$RUNNER_TEMP/synthetic/work_samples/bathing_samples_discodata.sqlite" \
+          python scripts/stage_deploy_stores.py --output "$RUNNER_TEMP/stage"
+          # The staged folder must hold exactly the three stores and the manifest the Dockerfile copies.
+          test "$(ls "$RUNNER_TEMP/stage" | sort | tr '\n' ' ')" = "bathing_samples_discodata.sqlite bathing_water_2025.sqlite manifest.json waterbase_icm_2026.sqlite "
+
+      - name: Build the image (no push) with the staged stores as the additional build context
+        run: |
+          docker buildx build --platform linux/amd64 --build-context stores="$RUNNER_TEMP/stage" \
+            --load -t oah-backend:ci .
+
+      - name: Start the image and probe /health (dummy access key, no model key)
+        run: |
+          docker run -d --name oah-ci -p 8080:8080 -e OAH_API_KEY=ci-dummy oah-backend:ci
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8080/health; then echo; break; fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8080/health
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/languages)" = "401"
+          # The three stores are in the image (read-only) and the taxon file shipped with the source tree.
+          docker exec oah-ci sh -c 'ls -l /data/stores && test -f /app/src/oah/external/data/gbif_taxa.json'
+          docker exec oah-ci python /app/container_healthcheck.py
+          docker logs oah-ci
+          docker rm -f oah-ci

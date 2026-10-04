@@ -1,0 +1,72 @@
+name: CI
+
+# Runs on every push and pull request. No secrets are used or needed: the test suite never calls a real
+# language-model API and reads no credentials. The lockfile (requirements-lock.txt) is hash-pinned, so the
+# job installs exactly the audited set of packages.
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # The project is developed and tested on Windows; a Linux run has not been verified.
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-lock.txt
+
+      - name: Install the pinned dependencies
+        run: |
+          python -m pip install --require-hashes -r requirements-lock.txt
+          python -m pip install --no-deps -e .
+
+      - name: Lint
+        run: python -m ruff check src scripts tests
+
+      - name: Type check
+        run: python -m mypy
+
+      - name: Tests
+        run: python -m pytest -q
+
+  dependency-audit:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    # Blocking: the pinned set was audited clean on 2026-09-29 (pytest upgraded to 9.0.3). A newly published
+    # advisory for a pinned package fails this job; fix it by bumping the pin and regenerating the lockfile.
+    # Exceptions are explicit: security/pip-audit-ignore.txt, one advisory per line with a reason and a review date
+    # (a line without a reason fails the job here and the unit tests). --strict also fails when a package cannot be
+    # audited, so a silent skip cannot hide a vulnerability. This job has not been observed running with the ignore
+    # list yet (written, not run).
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Audit the pinned dependencies for known vulnerabilities
+        shell: bash
+        run: |
+          python -m pip install pip-audit
+          ignore_args=()
+          while IFS='|' read -r id reason review; do
+            id="$(echo "$id" | xargs)"
+            case "$id" in ''|'#'*) continue ;; esac
+            if [ -z "$(echo "$reason" | xargs)" ] || [ -z "$(echo "$review" | xargs)" ]; then
+              echo "security/pip-audit-ignore.txt: entry '$id' needs a reason and a review-by date" >&2
+              exit 1
+            fi
+            ignore_args+=(--ignore-vuln "$id")
+          done < security/pip-audit-ignore.txt
+          python -m pip_audit -r requirements-lock.txt --disable-pip --no-deps --strict "${ignore_args[@]}"

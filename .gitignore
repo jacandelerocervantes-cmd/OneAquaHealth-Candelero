@@ -1,0 +1,33 @@
+.env
+.env.*
+!.env.example
+.venv/
+.venv*/
+data/cache/
+data/dumps/
+out/
+node_modules/
+stack-ia-dev/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.pytest-tmp/
+.ruff_cache/
+.hypothesis/
+.gcp_ssh/
+*.pem
+*.key
+credentials.json
+
+# Third-party implementation-guide and reference material with unresolved upstream licensing
+# (hl7-eu/oah declares none; decision recorded 2026-09-27, see docs/handoff/LEDGER.md and SOURCES.yaml).
+# Regenerate locally with `oah-extract-ig` / `oah-verify-reference`; never redistribute from this repo.
+# reference/CHECKSUMS.sha256 is this project's own hash manifest, not third-party content, and stays tracked.
+ig/oah/
+reference/*.zip
+reference/*.pdf
+.coverage
+
+# Third-party presentations of the hackathon organisers (HL7 Europe, SYNYO, IEEE): no licence is stated, so they
+# are kept on disk for reference, cited in SOURCES.yaml and never redistributed from this repository.
+OneAquaHealth_hackathon_session_*.pdf
