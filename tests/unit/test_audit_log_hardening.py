@@ -140,6 +140,38 @@ def test_a_failure_to_delete_an_old_file_does_not_block_the_write(log, monkeypat
     assert audit.verify_all()[0] is True
 
 
+@pytest.mark.parametrize("cap", [1, 2, 3, 5])
+def test_rotations_within_one_clock_tick_keep_their_order_and_the_chain(log, monkeypatch, cap):
+    """Regression: with a frozen clock (several rotations in one tick) pruning the oldest file freed its sequence number,
+    the next rotation reused it, the newest file sorted first and the chain failed (flaky on the ~15 ms Windows clock)."""
+    from datetime import datetime, timezone
+
+    frozen = datetime(2026, 1, 1, 12, 0, 0, 123456, tzinfo=timezone.utc)
+    monkeypatch.setattr(audit, "utc_now", lambda: frozen)
+    monkeypatch.setattr(audit, "MAX_LOG_BYTES", 300)
+    monkeypatch.setattr(audit, "MAX_ROTATED_FILES", cap)
+    _fill(60)
+    rotated = audit.rotated_files(log)
+    assert len(rotated) == cap
+    numbers = []
+    for path in rotated + [log]:
+        numbers += [json.loads(text)["n"] for text in path.read_text(encoding="utf-8").splitlines()]
+    assert numbers == sorted(numbers) and numbers[-1] == 59
+    assert audit.verify_all()[0] is True
+
+
+def test_a_clock_that_moves_backwards_still_rotates_in_order(log, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    base = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    ticks = iter(range(10_000))
+    monkeypatch.setattr(audit, "utc_now", lambda: base - timedelta(seconds=next(ticks)))  # every call is earlier
+    monkeypatch.setattr(audit, "MAX_LOG_BYTES", 300)
+    monkeypatch.setattr(audit, "MAX_ROTATED_FILES", 3)
+    _fill(40)
+    assert audit.verify_all()[0] is True
+
+
 def test_the_default_cap_is_small_because_the_disk_may_be_memory():
     assert 1 <= audit.MAX_ROTATED_FILES <= 10
     assert audit.MAX_ROTATED_FILES * audit.MAX_LOG_BYTES <= 64 * 1024 * 1024

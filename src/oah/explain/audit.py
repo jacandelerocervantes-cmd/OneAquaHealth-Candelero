@@ -21,6 +21,7 @@ import json
 import sys
 import threading
 from collections.abc import Mapping
+from datetime import timezone
 from pathlib import Path
 from typing import Any
 
@@ -89,6 +90,31 @@ def rotated_files(path: Path) -> list[Path]:
     return sorted(path.parent.glob(f"{path.stem}.*{path.suffix}"))
 
 
+def _next_rotated_path(path: Path) -> Path:
+    """Name for the file about to be rotated: it always sorts AFTER every rotated file that exists.
+
+    The name is ``<stem>.<UTC stamp>-<sequence><suffix>`` with a fixed-width stamp. Several rotations can share one clock
+    tick (the Windows clock advances in steps of about 15 ms), so the sequence is the successor of the newest existing
+    name with the same stamp, never the first free number: after the oldest file of a tick was pruned, "first free"
+    would give the NEWEST file the smallest sequence, so it would sort first and be pruned or verified out of order. A clock
+    that moved backwards keeps the stamp of the newest file for the same reason.
+    """
+    now = utc_now().astimezone(timezone.utc)
+    stamp = now.strftime("%Y%m%dT%H%M%S%f") + "Z"
+    sequence = 0
+    existing = rotated_files(path)
+    if existing:
+        newest_stem = existing[-1].name[len(path.stem) + 1 : len(existing[-1].name) - len(path.suffix)]
+        newest_stamp, _, newest_sequence = newest_stem.rpartition("-")
+        if newest_stamp >= stamp and newest_sequence.isdigit():
+            stamp, sequence = newest_stamp, int(newest_sequence) + 1
+    candidate = path.with_name(f"{path.stem}.{stamp}-{sequence:06d}{path.suffix}")
+    while candidate.exists():  # never overwrite, whatever the names on disk look like
+        sequence += 1
+        candidate = path.with_name(f"{path.stem}.{stamp}-{sequence:06d}{path.suffix}")
+    return candidate
+
+
 def _prune_rotated(path: Path) -> None:
     """Delete the oldest rotated files beyond ``MAX_ROTATED_FILES``. A failure to delete never blocks the audit write."""
     excess = rotated_files(path)[: max(0, len(rotated_files(path)) - max(0, MAX_ROTATED_FILES))]
@@ -128,13 +154,7 @@ def record(event: str, **fields: Any) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         previous = _last_hash(path)
         if path.is_file() and path.stat().st_size >= MAX_LOG_BYTES:
-            stamp = format_utc(utc_now()).replace(":", "").replace("+", "").replace("-", "")
-            sequence = 0
-            rotated = path.with_name(f"{path.stem}.{stamp}-{sequence:04d}{path.suffix}")
-            while rotated.exists():  # two rotations in one clock tick must never overwrite each other
-                sequence += 1
-                rotated = path.with_name(f"{path.stem}.{stamp}-{sequence:04d}{path.suffix}")
-            path.replace(rotated)
+            path.replace(_next_rotated_path(path))
             _prune_rotated(path)
         line["prev_hash"] = previous
         line["hash"] = _chain_hash(previous, line)

@@ -199,6 +199,12 @@ before the next call leaves the process. A test checks that the chain verifies a
 emitted as one structured JSON line on stdout (digest-only, so Cloud Logging keeps it across restarts) and at most 4 rotated files are kept
 on disk (`docs/architecture.md`, "LLM audit trail").
 
+Rotated file names are `llm_calls.<UTC stamp, fixed width, microseconds>Z-<6-digit sequence>.jsonl` and each new name always sorts after every
+rotated file that exists (`_next_rotated_path` in `src/oah/explain/audit.py`): same clock tick gives the successor of the newest sequence, and a clock
+that moved backwards keeps the newest stamp. Reason: the previous rule took the first free sequence number, so on a coarse clock (about 15 ms on
+Windows) several rotations in one tick plus pruning of the oldest file freed `-0000`, the next rotation reused it, the newest file sorted first and
+`verify_all` reported a broken chain. Tests: `tests/unit/test_audit_log_hardening.py` (frozen clock, several caps; clock moving backwards).
+
 ## 6. Threat model
 
 | Threat | Control | Residual |

@@ -1,6 +1,6 @@
 # Devpost description (About the project, Built with)
 
-Status: 2026-10-04. The text below is for the "About the project" box of the Devpost submission (Markdown with LaTeX), and
+Status: 2026-10-05 (reviewed against the repository). The text below is for the "About the project" box of the Devpost submission (Markdown with LaTeX), and
 the list of tags for "Built with" (at most 25). Every claim is one the repository and the live site support; if a figure
 changes before the submission, change it here and in the Devpost box.
 
@@ -22,13 +22,15 @@ read as FHIR R4) and on the way out (the measurements of any site download as a 
 ## What it does
 
 Ask a plain question about the rivers, lakes and bathing waters of **Greece, Italy and Norway**, in **26 languages**, and
-get an answer written only from real European data:
+get an answer written only from the European data the agent retrieved:
 
 - **EEA Waterbase** (river and lake measurements), the **EEA Bathing Water Directive** classifications and individual
   *E. coli* and enterococci samples, and the **HL7 Europe sandbox**. Modelled context (weather, river discharge, species
   records) is shown, always labelled as modelled.
 - Every answer carries its **sources, licence, method and the reference values used**, labelled as screening aids, never as
   legal limits.
+- **No invented limits.** Where there is no reference value (turbidity, organic matter, lakes) the value is shown as measured and
+  marked **Not scored**; "within limit" and "exceeds limit" appear only where a real reference value exists.
 - **No health verdicts.** Ask "is it safe to swim?" and it declines and points to the competent authority.
 - Search a site as you type, see places on a map, read the data under the conversation, and **download it as FHIR**.
 
@@ -37,8 +39,8 @@ get an answer written only from real European data:
 - **Backend:** FastAPI on Google Cloud Run. Three prebuilt SQLite stores (Waterbase aggregates, bathing-water classifications,
   754,451 bathing-water samples), a read-only **tool-use agent** (Claude, Anthropic API) that chooses which data tool to call,
   a hash-chained audit log that stores digests only, rate limits and spend caps.
-- **The rule that makes it trustworthy:** before an answer is shown, every number the model wrote is matched against the data it
-  retrieved. A number written with $d$ decimals is accepted only if
+- **The rule that makes it trustworthy:** before an answer is shown, every number the model wrote, and its unit, is matched against the
+  data it retrieved. A number written with $d$ decimals is accepted only if
   $$|x_{\text{text}} - x_{\text{data}}| \le 0.5 \times 10^{-d}$$
   for some value of the tool results; otherwise the answer is **withheld** and the evidence is shown instead. The model is not
   allowed to compute: a change between two periods comes from a tool. The store keeps the sum and the count of every month,
@@ -48,7 +50,7 @@ get an answer written only from real European data:
   Provenance). We never invent a code: a parameter without a standard code is plain text.
 - **Web:** Next.js, with the access key kept on the server, a CSP, and an allow-list proxy. The whole interface, not only the
   answers, follows the selected language.
-- **Quality:** more than 3,300 automated tests (98 % coverage), continuous integration, a typed OpenAPI contract and a
+- **Quality:** more than 3,400 automated tests (97 % line coverage at the last measurement, 26 September), continuous integration, a typed OpenAPI contract and a
   documented, reproducible setup. The repository is public and the backend can be run by anyone.
 
 ## Challenges
@@ -60,7 +62,7 @@ get an answer written only from real European data:
 - **Guardrails have false positives.** Live testing showed a Markdown label (`**Sandbox data:**`) read as a web address, and a
   word like "two" counted as an invented number. We fixed both, with tests, and measured the result on the live site.
 - **Real data is dirty.** The Italian pH data held values that cannot exist; the build now drops anything outside the pH scale
-  (805 values) and counts it.
+  (805 values in that build) and counts it.
 - **Honesty under time pressure.** We label what is real, modelled and synthetic, and what we could not verify.
 
 ## What we learned
@@ -72,13 +74,22 @@ tests for the refusals. The model writes the sentence; the system decides whethe
 
 The 25 non-English translations of the interface are machine drafts and have not been reviewed by native speakers. The FHIR
 download is structurally valid FHIR R4 but does not claim conformance to the OneAquaHealth profiles. Citizen-science data exists
-only as a clearly labelled synthetic lab. Rate limits live in memory, so the service runs as one instance. Answers vary between
-runs.
+only as a clearly labelled synthetic lab. The data are prebuilt snapshots, rebuilt by script, not a live feed. Rate limits live in
+memory, so the service runs as one instance. Answers vary between runs.
 
-## What's next
+## What's next, and how
 
-Human review of the translations, citizen-science observations as a real input (FHIR in), more countries (one data store each),
-and profile-conformant FHIR export of every answer's evidence.
+None of this exists yet; each item says how it would be done.
+
+- **More countries, with their own limits:** the three stores are built by scripts from public EEA data, and reference values
+  live in a file that reloads without code changes, each value carrying its source.
+- **More parameters:** one entry in a mapping table, then a rebuild.
+- **More languages:** one dictionary file, checked automatically (no link or markup may be added by a translation).
+- **Fresh data:** the same build scripts, run on a schedule instead of by hand.
+- **More users:** rate limits and the audit log move from memory to a shared store, so the service can run on several instances.
+- **More standards:** a FHIR capability statement and search, standard codes once the implementation guide confirms them, and
+  profile-conformant export of every answer's evidence; citizen-science observations as a real input (FHIR in).
+- **With people:** translations reviewed by local agencies, and a pilot with local water officers.
 
 **Try it:** https://one-aqua-health-candelero.vercel.app/ — **Code:** https://github.com/jacandelerocervantes-cmd/OneAquaHealth-Candelero
 ```
