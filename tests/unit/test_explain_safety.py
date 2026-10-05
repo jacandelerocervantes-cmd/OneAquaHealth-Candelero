@@ -264,7 +264,15 @@ def test_a_scheme_word_followed_by_a_space_is_prose_not_a_url(text):
     assert "contains-url" not in guard_output(text, "describe", INSTRUCTIONS)
 
 
-@pytest.mark.parametrize("text", ["data:text/html;base64,AAAA", "see https://x.org", "file:///etc/passwd", "www.example.org"])
+@pytest.mark.parametrize(
+    "text",
+    ["- **Sandbox data:** it holds 3 sites.", "**Bathing-water data:**\n- classes", "The EEA data:** annual values", "- **file:** none"],
+)
+def test_a_markdown_bold_label_ending_in_a_scheme_word_is_not_a_url(text):
+    assert "contains-url" not in guard_output(text, "describe", INSTRUCTIONS)
+
+
+@pytest.mark.parametrize("text", ["data:text/html;base64,AAAA", "see https://x.org", "file:///etc/passwd", "www.example.org", "javascript:alert(1)"])
 def test_real_links_are_still_flagged_as_urls(text):
     assert "contains-url" in guard_output(text, "describe", INSTRUCTIONS)
 

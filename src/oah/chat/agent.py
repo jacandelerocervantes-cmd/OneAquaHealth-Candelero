@@ -14,6 +14,7 @@ propagates) before the next call leaves the process.
 """
 from __future__ import annotations
 
+import re
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -117,6 +118,55 @@ def _block_dict(block: Any) -> dict[str, Any]:
 def _tokens(response: Any) -> tuple[int | None, int | None]:
     usage = getattr(response, "usage", None)
     return getattr(usage, "input_tokens", None), getattr(usage, "output_tokens", None)
+
+
+# The only output flag a revision may fix: a web address (the answer is never shown with one). Every other flag (a health
+# claim, a leak of the instructions, markup, code, a causal claim) is a refusal that the model does not get to rephrase.
+REVISABLE_FLAGS = frozenset({"contains-url"})
+_NUMBER_TEXT = re.compile(r"[0-9A-Za-z.,%/ \-]{1,24}")
+
+
+def next_words(text: str, items: Sequence[str]) -> list[str]:
+    """For each short number string the grounding check could not trace, the ONE word that follows it in the text (lower case,
+    letters only, at most 20), or "" when there is none. A diagnostic for the audit trail: it shows which noun a count was
+    attached to ("two sources", "two ways") so the check's list of discourse nouns can be judged from facts, without the
+    text of any answer ever being stored."""
+    words: list[str] = []
+    for item in list(items)[:8]:
+        text_item = str(item)
+        if len(text_item) > 24 or not _NUMBER_TEXT.fullmatch(text_item):
+            words.append("")
+            continue
+        found = re.search(r"(?<![\w.])" + re.escape(text_item) + r"\s+([A-Za-z]{1,20})\b", text)
+        words.append(found.group(1).lower() if found else "")
+    return words
+
+
+def revisable(check: Any, flags: Sequence[str]) -> bool:
+    """True when the answer failed only on numbers, units or a web address, so one revision is worth a model call."""
+    if set(flags) - REVISABLE_FLAGS:
+        return False
+    return (not check.grounded) or bool(set(flags) & REVISABLE_FLAGS)
+
+
+def revision_note(ungrounded: Sequence[str], mismatches: Sequence[str], flags: Sequence[str]) -> str:
+    """The message that asks for ONE rewrite. It repeats only short number strings of the model's own text (bounded and
+    filtered), the existence of a unit mismatch and of a web address: nothing a tool result or a user wrote."""
+    problems: list[str] = []
+    # A string longer than the bound is dropped whole (never cut): a cut piece of free text could pass the filter.
+    numbers = [text for text in (str(item) for item in ungrounded) if len(text) <= 24 and _NUMBER_TEXT.fullmatch(text)][:8]
+    if numbers:
+        problems.append("these numbers are not in the tool results: " + ", ".join(numbers))
+    if mismatches:
+        problems.append("a unit does not match the tool results")
+    if set(flags) & REVISABLE_FLAGS:
+        problems.append("it contained a web address")
+    return (
+        "Your previous answer was not shown because " + "; ".join(problems) + ". Write the answer again. Report the figures "
+        "the tool results DO contain (for example both period means), exactly as given, with their units. Do not compute "
+        "differences, percentages, sums or averages yourself. Say that data is missing ONLY if the tool results really hold "
+        "no data for what was asked: never say so when they do. Write no web addresses and no links."
+    )
 
 
 def _add(total: int | None, value: int | None) -> int | None:
@@ -245,12 +295,49 @@ def run_chat(
     elif not final_text:
         status, answer = "no-answer", NO_ANSWER_TEXT
     else:
-        check = check_grounding(final_text, evidence)
+        def evaluate(text: str) -> tuple[Any, tuple[str, ...]]:
+            result = check_grounding(text, evidence)
+            found = tuple(guard_output(text, "describe", CHAT_LEAK_CHECK_SIZED))
+            if any(outcome.ok and outcome.name in EXTERNAL_TOOL_NAMES for outcome in outcomes):
+                # weather, flow and species records are context only: a causal claim about them is withheld like any unsafe answer
+                found = (*found, *causal_claim_flags(text))
+            return result, found
+
+        check, flags = evaluate(final_text)
+        if revisable(check, flags) and clock() < deadline and reserve_model_call():
+            # ONE revision, never more: the checks stay exactly as they are; the model is told what to fix and the new text goes
+            # through the same checks. Only numbers, units and a web address are revisable; a health claim, a leak of the
+            # instructions or a causal claim is never given a second try (docs/chat_agent.md, section 12).
+            audit.record(
+                "chat-revision", call_id=call_id, ungrounded_count=len(check.ungrounded_numbers),
+                unit_mismatch_count=len(check.unit_mismatches), output_flags=list(flags),
+                ungrounded_next_words=next_words(final_text, check.ungrounded_numbers),
+            )
+            try:
+                retry = client.messages.create(
+                    model=model,
+                    max_tokens=limits.max_output_tokens,
+                    system=CHAT_SYSTEM_PROMPT,
+                    messages=[
+                        *messages,
+                        {"role": "assistant", "content": final_text},
+                        {"role": "user", "content": revision_note(check.ungrounded_numbers, check.unit_mismatches, flags)},
+                    ],
+                    tools=tools,
+                    tool_choice={"type": "none"},
+                    timeout=max(1.0, min(PER_CALL_TIMEOUT_SECONDS, deadline - clock())),
+                )
+            except anthropic.APIError as error:
+                audit.record("chat-error", call_id=call_id, step=0, error_type=type(error).__name__)
+                raise wrap_anthropic_error(error) from error
+            model_calls += 1
+            step_in, step_out = _tokens(retry)
+            input_tokens, output_tokens = _add(input_tokens, step_in), _add(output_tokens, step_out)
+            revised = "".join(str(getattr(block, "text", "")) for block in retry.content if block.type == "text").strip()
+            if revised:
+                final_text = revised
+                check, flags = evaluate(final_text)
         grounded, ungrounded, mismatches = check.grounded, check.ungrounded_numbers, check.unit_mismatches
-        flags = guard_output(final_text, "describe", CHAT_LEAK_CHECK_SIZED)
-        if any(outcome.ok and outcome.name in EXTERNAL_TOOL_NAMES for outcome in outcomes):
-            # weather, flow and species records are context only: a causal claim about them is withheld like any unsafe answer
-            flags = (*flags, *causal_claim_flags(final_text))
         if set(flags) & (UNSAFE_OUTPUT_FLAGS | {CAUSAL_CLAIM_FLAG}):
             status, answer = "withheld", None
         elif not grounded:
@@ -275,6 +362,7 @@ def run_chat(
         output_tokens=output_tokens,
         grounded=grounded,
         ungrounded_count=len(ungrounded),
+        ungrounded_next_words=next_words(final_text, ungrounded) if final_text else [],
         output_flags=list(flags),
         evidence_sha256=evidence_digest,
         answer_sha256=audit.text_digest(final_text) if final_text else None,

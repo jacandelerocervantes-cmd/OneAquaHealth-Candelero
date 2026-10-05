@@ -357,6 +357,8 @@ class _Client:
     def __post_init__(self) -> None:
         def _create(**kwargs: Any) -> Any:
             self.calls.append({**kwargs, "messages": json.loads(json.dumps(kwargs["messages"], default=str))})
+            if len(self.calls) == len(self.replies) + 1 and "was not shown because" in str(kwargs["messages"][-1]):
+                return self.replies[-1]  # the one revision of a withheld answer: the scripted model repeats its last text
             return self.replies[len(self.calls) - 1]
 
         self.messages = SimpleNamespace(create=_create)

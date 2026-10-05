@@ -130,8 +130,6 @@ export default function Sidebar() {
             <div className="space-y-3">
               {visibleFamilies(c).map((family) => {
                 const open = !collapsed[family.id];
-                const first = family.indices[0];
-                const canAsk = family.id !== "synthetic-labs" && first;
                 return (
                   <section key={family.id} aria-label={t(family.title)}>
                     <div className="flex items-center justify-between">
@@ -144,16 +142,6 @@ export default function Sidebar() {
                         <span aria-hidden>{open ? "▾" : "▸"}</span>
                         {t(family.title)}
                       </button>
-                      {canAsk ? (
-                        <button
-                          type="button"
-                          aria-label={t("New question in {name}", { name: t(family.title) })}
-                          onClick={() => newQuestion(first.id, indexHref(first))}
-                          className="rounded px-2 text-lg leading-none text-muted hover:bg-line/40"
-                        >
-                          +
-                        </button>
-                      ) : null}
                     </div>
                     {open ? (
                       <ul className="space-y-0.5">

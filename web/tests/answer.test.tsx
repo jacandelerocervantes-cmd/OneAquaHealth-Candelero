@@ -30,7 +30,8 @@ describe("answer states", () => {
     expect(within(block).getByText("Method")).toBeInTheDocument();
     expect(within(block).getByText("Limits")).toBeInTheDocument();
     expect(within(block).getByText("Coverage and flags")).toBeInTheDocument();
-    expect(block).toHaveTextContent("get_site_measurements");
+    expect(block).toHaveTextContent("Get site measurements");
+    expect(block).not.toHaveTextContent("get_site_measurements");
     expect(block).toHaveTextContent("not a compliance assessment");
   });
 
@@ -104,7 +105,9 @@ describe("answer states", () => {
     expect(screen.getByTestId("answer-text").textContent).toContain("<script>alert(2)</script>");
     expect(container.querySelector("script")).toBeNull();
     expect(container.querySelector("img")).toBeNull();
-    expect(container.querySelector("strong")).toBeNull();
+    // **bold** is the one formatting shown, built as an element (never as HTML); no asterisks are left on screen.
+    expect(container.querySelector("strong")?.textContent).toBe("bold");
+    expect(screen.getByTestId("answer-text").textContent).not.toContain("**");
     expect(container.querySelector('a[href="https://evil.example"]')).toBeNull();
   });
 });

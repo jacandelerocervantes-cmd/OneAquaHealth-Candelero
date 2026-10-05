@@ -35,6 +35,7 @@ export function sitesToPlaces(data: SitesResponse, country: string, t: TFunction
     latitude: s.latitude,
     longitude: s.longitude,
     detail: siteDetail(s.ui_status, t),
+    measurementsOnly: s.status === "measurements-only",
     color: STATUS_COLOR[s.ui_status] ?? "#6b7280",
     tag: s.ui_status,
   }));
@@ -187,7 +188,7 @@ export default function MapPane({ expanded = false, onToggleExpanded }: { expand
   }, [sites, waters, wantSites, wantWaters, settings.country, t]);
 
   const selectedId = app.place?.id ?? null;
-  const pick = (p: MapPlace) => app.setPlace({ kind: p.kind, id: p.id, name: p.name, country: p.country, latitude: p.latitude, longitude: p.longitude, detail: p.detail });
+  const pick = (p: MapPlace) => app.setPlace({ kind: p.kind, id: p.id, name: p.name, country: p.country, latitude: p.latitude, longitude: p.longitude, detail: p.detail, measurementsOnly: p.measurementsOnly });
 
   return (
     <aside data-testid="map-pane" aria-label={t("Map")} className="flex h-full w-full flex-col gap-3 overflow-y-auto border-l border-line bg-canvas p-3">

@@ -9,7 +9,19 @@ import { Async, DataTable, EmptyState, KeyValues, Notice, Pill } from "../ui";
 import { FhirDownload } from "./fhir-download";
 import { SourceFooter, useExport } from "./shared";
 
-export function WaterQualityPanel({ siteId }: { siteId: string }) {
+export function WaterQualityPanel({ siteId, measurementsOnly = false }: { siteId: string; measurementsOnly?: boolean }) {
+  const t = useT();
+  if (measurementsOnly) {
+    return (
+      <Notice tone="info">
+        {t("The water quality index is computed only for sandbox locations. This site has measurements only: see Water parameters.")}
+      </Notice>
+    );
+  }
+  return <WaterQualityResult siteId={siteId} />;
+}
+
+function WaterQualityResult({ siteId }: { siteId: string }) {
   const t = useT();
   const state = useApi<Schema<"IndexResponse">>(`/indices/${encodeURIComponent(siteId)}`);
   useExport(`water-quality-${siteId}.json`, state.status === "ready" ? state.data : null);

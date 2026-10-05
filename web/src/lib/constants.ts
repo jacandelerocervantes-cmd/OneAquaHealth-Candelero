@@ -77,6 +77,7 @@ export const DYNAMIC_TEXTS: readonly string[] = [
   msg("Bathing classes"), msg("E. coli and enterococci"), msg("Weather"), msg("River discharge"),
   msg("Species nearby"), msg("Data quality"), msg("Citizen science"), msg("Review queue (read-only)"), msg("River risk"),
   msg("sandbox"), msg("EEA Waterbase"), msg("EEA bathing-water classification"), msg("EEA bathing samples"),
+  msg("Not scored"), msg("Indeterminate"), msg("Excluded"), msg("Evaluated"), msg("Skipped"), msg("Measurements only"),
   msg("Within limit"), msg("Exceeds limit"), msg("No limit regime"), msg("Unmapped"), msg("Below quantification limit"),
   msg("Good"), msg("Moderate"), msg("Poor"), msg("Unavailable"),
   msg("Loading"), msg("Loading map"), msg("Waiting for the answer"),

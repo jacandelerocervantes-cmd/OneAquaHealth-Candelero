@@ -12,6 +12,8 @@ export interface PickedPlace {
   latitude: number | null;
   longitude: number | null;
   detail?: string;
+  /** A Waterbase site: it has measurements but no CCME index, which exists only for sandbox locations. */
+  measurementsOnly?: boolean;
 }
 
 export interface UserMessage {

@@ -89,6 +89,11 @@ data into any FHIR system with one click (the web app's "Download as FHIR" butto
 | `meta.tag` | data origin of the record under the project system `.../CodeSystem/data-origin` (`real-eea-waterbase`, `real-sandbox`); the Bundle also carries `real-derived` | same system as the other exports |
 | `Device`, `Provenance` | one software Device; Provenance targets every Observation, source = the attribution of the data, reason = the screening statement | `oah.fhir.output.builders` |
 
+Numbers: a float value, observed minimum, observed maximum and reference value are written with at most 6 significant digits
+(`_sig`; derived transformation, added 2026-10-05): a mean such as `15.945454545454544` of 11 samples is exported as
+`15.9455`, because the digits beyond that are an artefact of the division, not information. The stored data are not changed;
+integers are untouched.
+
 Ids are deterministic (UUID5 of site, parameter, period, statistic, matrix and unit), so the same selection gives the same
 Observation ids; only the Provenance (recorded time and id) changes between calls. Records without a value are left out; a
 selection without any value is a 404. Structural validity (FHIR R4B models of `fhir.resources`) of the Bundle and of every

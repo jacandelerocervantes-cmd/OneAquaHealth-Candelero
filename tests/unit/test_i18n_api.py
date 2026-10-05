@@ -440,7 +440,8 @@ def test_a_withheld_english_answer_is_withheld_in_every_language(monkeypatch, ht
     fake = use(monkeypatch, Routing(english="See https://example.org for the answer."))
     body = chat(http, language="it").json()
     assert body["status"] == "withheld" and body["unsafe"] is True and body["answer"] is None and body["answer_en"] is None
-    assert fake.translation_calls == [] and body["usage"]["model_calls"] == 1
+    # one conversation call and the one revision a web address may get (the scripted model repeats it); no translation call
+    assert fake.translation_calls == [] and body["usage"]["model_calls"] == 2
     assert body["translation_status"] == "not-needed" and body["translation_reasons"] == ["english-answer-unsafe"]
     assert body["notices"]["withheld_notice"] == load_strings("it").strings["withheld_notice"]
 
@@ -529,7 +530,8 @@ def test_a_not_grounded_chat_answer_is_withheld_in_every_language_and_never_tran
     body = chat(http, language="it").json()
     assert body["status"] == "withheld-ungrounded" and body["answer"] is None and body["answer_en"] is None
     assert body["grounded"] is False and "4321" in body["ungrounded_numbers"] and body["unsafe"] is False
-    assert fake.translation_calls == [] and body["usage"]["model_calls"] == 1
+    # one conversation call and the one revision of an ungrounded answer (the scripted model repeats it); no translation call
+    assert fake.translation_calls == [] and body["usage"]["model_calls"] == 2
     assert body["translation_status"] == "not-needed" and body["translation_reasons"] == ["english-answer-ungrounded"]
     assert body["notices"]["withheld_ungrounded_notice"] == load_strings("it").strings["withheld_ungrounded_notice"]
     assert "withheld_notice" not in body["notices"] and body["translation_checks"] == "neutral-and-denylist"

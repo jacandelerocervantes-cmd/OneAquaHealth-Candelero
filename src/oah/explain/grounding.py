@@ -94,7 +94,14 @@ class _Mention:
 # Discourse nouns a writer uses to number their own remarks. A spelled or digit count of 2-10 directly before one of
 # them is not a claim about the data ("Two points for your decision"). Data nouns ("measurements", "families",
 # "observations") are deliberately absent, so an invented count of those is still flagged.
-_ENUMERATOR_NOUNS = frozenset({"points", "things", "reasons", "steps", "options", "caveats", "notes", "questions"})
+#
+# 2026-10-04 (live checks): an answer to "is it safe to swim?" was withheld for "two" in a sentence that introduces its own
+# two-item list ("this data holds two ..."), so the structural nouns "kinds", "types", "parts", "sections", "items" and
+# "categories" were added to the list. They describe how the answer is organised, like "points" and "things"; counts of
+# sites, bathing waters, samples, sources or groups are still checked.
+_ENUMERATOR_NOUNS = frozenset(
+    {"points", "things", "reasons", "steps", "options", "caveats", "notes", "questions", "kinds", "types", "parts", "sections", "items", "categories"}
+)
 _NEXT_WORD = re.compile(r"\s+([A-Za-z]+)")
 
 

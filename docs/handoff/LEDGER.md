@@ -6134,3 +6134,22 @@ Source: `src/oah/bathing_samples/storage.py`, `build.py`, `constants.py`, `store
 ### Files touched
 
 - `src/oah/fhir/output/measurements.py`, `src/oah/api/routes/sites.py`, `tests/unit/test_fhir_measurements.py`, `docs/openapi.json`, `docs/api_routes.md`, `docs/fhir_mapping.md`, `docs/web_app.md`, `docs/demo_video_script.md`, `docs/demo_plan.md`, `web/src/lib/{fhir,api-types}.ts`, `web/src/lib/server/allowlist.ts`, `web/src/lib/server/mock/{handlers.ts,routes/sites.ts}`, `web/src/components/index-data/{fhir-download,water-panels}.tsx`, `web/tests/{fhir.test.ts,pages.test.tsx}`, the 25 dictionaries and `_keys.json` of `web/src/lib/locales/`, `docs/handoff/LEDGER.md`.
+
+## 2026-10-04 -- Agent: Claude -- Chat revision and diagnostics, "Not scored" video scene, Water quality fix for Waterbase sites, demo video assembled
+
+### Done
+
+- Chat: one revision of a withheld answer (`src/oah/chat/agent.py`): only for ungrounded numbers or units and for `contains-url`; never for health claims, leaks, markup, code or causal claims; the revised text goes through the same checks; it counts as a model call; audit event `chat-revision`. The revision note tells the model to say "no data" ONLY when the tool results hold none. Guard fixes found in live checks: `data:` and `**Sandbox data:**` were read as web addresses (`src/oah/explain/safety.py`); structural nouns added to the enumerator list (`src/oah/explain/grounding.py`). Tests: `tests/unit/test_chat_revision.py` and adjustments to the older chat tests. Measured live: Italy phosphorus 4 of 4 withheld before, 10 of 10 answered after; Greece general 5 of 5; Greece health 3 of 5, then 10 of 12.
+- Diagnostic `ungrounded_next_words` in the audit records (only the one word after each untraced number; no answer text is stored). Finding: the word is taken from the FIRST occurrence of the number in the text, so it can name an occurrence that was exempt ("two things"); the retained one was "seasons" (a count of data, which the guard rightly withholds when it cannot trace it). No change made to loosen the guard. Known limit of the diagnostic, not fixed.
+- Backend deployed as images 20261004-N, last revision `oah-backend-00010-85f` (daily chat cap 40). The full Python suite was run before each deployment; one flaky audit-rotation test is known (tiny `MAX_LOG_BYTES`, ordering on Windows; cause not proven).
+- Web: per-section "+" removed from the sidebar. Real defect found from a production 404 log (`GET /indices/<Waterbase station id>`): the Water quality index (CCME) exists only for sandbox locations, but the panel asked for it for every site, so a Waterbase station showed "Nothing was found for this request" (reproduced live). Now `PickedPlace.measurementsOnly` (set from `status === "measurements-only"` in the place finder and the map) makes `WaterQualityPanel` show a note and make no request. One new interface text translated in the 25 dictionaries (309 texts); test `web/src/components/index-data/water-panels.test.tsx`. Web checks: typecheck, lint, i18n, 164 tests green. NOT yet deployed (Vercel redeploys after the maintainer pushes).
+- Demo video (outside the repository): new scene 5 explaining "Not scored" (narration in `docs/demo_video_narration.md`), voice by the maintainer with ElevenLabs, scenes 3 and 5 re-recorded on the live site, assembled with burned English subtitles: 3 min 46 s. The Italy health answer in scene 3 shows literal `**` markers (the web does not render Markdown in answers); cosmetic, not changed.
+- Devpost text and tags: `docs/devpost_description.md`.
+
+### Not done (needs the maintainer or other access)
+
+- Commit and push (explicit `git add` paths, never `-A`; `frontend/` is an untracked leftover); upload of the video; Devpost submission; human review of translations; fix of the flaky audit test; accurate per-occurrence diagnostic.
+
+### Files touched
+
+- `src/oah/chat/agent.py`, `src/oah/explain/{safety,grounding,audit}.py`, `src/oah/chat/prompts.py`, `tests/unit/test_chat_revision.py`, `docs/chat_agent.md`, `docs/demo_video_script.md`, `docs/demo_video_narration.md`, `docs/devpost_description.md`, `web/src/components/{sidebar,place-finder,map-pane}.tsx`, `web/src/components/index-data/{index,water-panels}.tsx`, `web/src/components/index-data/water-panels.test.tsx`, `web/src/lib/client/app-context.tsx`, the 25 dictionaries and `_keys.json` of `web/src/lib/locales/`, `docs/handoff/LEDGER.md`.

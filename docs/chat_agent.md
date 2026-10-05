@@ -360,3 +360,29 @@ much of the shared allowance is left.
   observed range and n when `low_precision` is true, gives the exact values otherwise, never says "confidence interval" or implies significance, and never states an interval that is not an observed range; the
   prompt is the only control for that wording (the grounding check catches an invented or wrongly rounded number, not a misleading phrase). The thresholds (20, 5, 0.25, two or three figures, ten exact values) are working values.
 * Needs `code-reviewer` and `qa-test-engineer` before merge.
+
+## 12. One revision of a withheld answer (2026-10-04)
+
+Found in the live checks of 2026-10-04: a correct question could end as "Answer withheld" because the model, asked for a
+change between two periods whose two means are almost equal, computed the difference (0.000036) and a percentage (0.34 %)
+itself. The check was right to withhold that text, but the visitor got no answer to a normal question.
+
+Rule: when the final text fails ONLY on numbers, units or a web address, the agent makes **one** more model call (never
+more) with the same history, the failed text and a fixed note (`oah.chat.agent.revision_note`). The note names the number
+strings that were not in the tool results (short, filtered strings; a longer string is dropped whole, never cut), says that
+a unit did not match and that a web address was found, and asks the model to report the figures the tool results DO contain
+(for example both period means), not to compute differences, percentages, sums or averages, to say that data is missing
+**only if the tool results really hold no data** for what was asked (never when they do), and to write no web addresses.
+
+What does not change: the revised text goes through exactly the same checks (grounding, units, the output guard, the leak
+check, the causal-claim check) and is shown only if it passes; if it still fails, the answer is withheld as before and the
+flags are those of the revised text. What is never revised: a health or potability claim, a leak of the instructions, markup,
+code and a causal claim (`REVISABLE_FLAGS` holds only `contains-url`). The revision is a counted model call (daily cap and rate
+limit apply), is audited as `chat-revision` (counts and flags, no text) and costs nothing when the first answer passes.
+`usage.model_calls` includes it. Tests: `tests/unit/test_chat_revision.py`; the scripted clients of the older chat tests repeat
+their last text when asked for the revision, so those tests still check the withheld result.
+
+Two false positives of the guard were fixed the same day (`docs/ai_known_issues.md` lists the guard's known limits): the URL
+filter no longer flags a Markdown bold label such as `**Sandbox data:**` or the prose "data: x", and the grounding check
+counts "kinds", "types", "parts", "sections", "items" and "categories" as words that number the answer's own list (counts of
+sites, bathing waters, samples, sources and groups are still checked).

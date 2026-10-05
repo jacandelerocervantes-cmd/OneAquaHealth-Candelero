@@ -264,7 +264,8 @@ def test_a_health_claim_is_withheld(monkeypatch, http):
 
 
 def test_a_link_in_the_answer_is_withheld(monkeypatch, http):
-    _use(monkeypatch, ScriptedClient([reply(Text("See https://example.org/data for details."))]))
+    # the model repeats the link when asked once more (repeat_last): the revision does not change the verdict
+    _use(monkeypatch, ScriptedClient([reply(Text("See https://example.org/data for details."))], repeat_last=True))
     body = _post(http).json()
     assert body["unsafe"] is True and body["answer"] is None and "contains-url" in body["output_flags"]
 
@@ -274,7 +275,7 @@ def test_an_invented_number_and_a_wrong_unit_are_reported(monkeypatch, http):
         PHOSPHATE_CALLS[1],
         reply(Text("Total phosphates were 0.77 mg/L, and the median was 0.03 ug/L.")),
     ]
-    _use(monkeypatch, ScriptedClient(calls))
+    _use(monkeypatch, ScriptedClient(calls, repeat_last=True))  # the revision gets the same wrong text again
     body = _post(http).json()
     assert body["grounded"] is False and "0.77" in body["ungrounded_numbers"]
     assert any(item.startswith("0.03 ug/L") for item in body["unit_mismatches"])

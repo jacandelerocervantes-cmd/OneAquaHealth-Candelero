@@ -71,7 +71,15 @@ def _note(record: dict[str, Any]) -> str:
     return "; ".join(parts)
 
 
+def _sig(value: Any) -> Any:
+    """A float limited to 6 significant digits: the mean of 11 samples is not known to 15 digits (docs/fhir_mapping.md)."""
+    if isinstance(value, float) and not isinstance(value, bool):
+        return float(f"{value:.6g}")
+    return value
+
+
 def _observation(record: dict[str, Any], location_id: str, location_uuid: str, location_name: str) -> dict[str, Any]:
+    record = {**record, **{key: _sig(record.get(key)) for key in ("value", "min", "max", "limit") if key in record}}
     quantity: dict[str, Any] = {"value": record["value"], "unit": record["unit"]}
     if record.get("comparator") in COMPARATORS:
         quantity["comparator"] = record["comparator"]

@@ -39,7 +39,10 @@ def evidence_digest(evidence: Mapping[str, Any]) -> str:
 # Event names of the chat agent (oah.chat), appended to the same chain as the explanation events
 # ("dispatch", "result", "error", "cache-hit"). Fields are digests, counts and flags, never full text.
 CHAT_EVENTS = frozenset(
-    {"chat-dispatch", "chat-model-call", "chat-tool-call", "chat-tool-result", "chat-error", "chat-result", "chat-cache-hit"}
+    {
+        "chat-dispatch", "chat-model-call", "chat-tool-call", "chat-tool-result", "chat-error", "chat-result", "chat-cache-hit",
+        "chat-revision",
+    }
 )
 
 

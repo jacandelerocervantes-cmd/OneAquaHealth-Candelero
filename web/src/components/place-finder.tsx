@@ -71,6 +71,7 @@ export default function PlaceFinder() {
       latitude: s.latitude,
       longitude: s.longitude,
       detail: siteDetail(s.ui_status, t),
+      measurementsOnly: s.status === "measurements-only",
     });
     setQ("");
     setOpen(false);

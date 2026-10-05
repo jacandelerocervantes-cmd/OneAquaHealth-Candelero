@@ -66,6 +66,10 @@ class Client:
         def _create(**kwargs: Any) -> Any:
             self.calls.append({**kwargs, "messages": json.loads(json.dumps(kwargs["messages"], default=str))})
             if len(self.calls) > len(self.replies):
+                # A withheld answer may be revised once (oah.chat.agent): the scripted model then repeats its last text, so
+                # these tests keep checking the withheld result. A request for more than that one revision is still an error.
+                if len(self.calls) == len(self.replies) + 1 and "was not shown because" in str(kwargs["messages"][-1]):
+                    return self.replies[-1]
                 raise AssertionError("the agent made more model calls than scripted")
             return self.replies[len(self.calls) - 1]
 
@@ -346,7 +350,11 @@ COMPARE_ARGS = {
 
 
 def chat(http: TestClient, monkeypatch, answer: str, **extra: Any) -> tuple[dict[str, Any], Client]:
-    client = Client([reply(ToolUse("t1", "compare_periods", COMPARE_ARGS)), reply(Text(answer)), reply(Text("TRANSLATION CALL MUST NOT HAPPEN"))])
+    # Third reply: the one revision a withheld ungrounded answer may get (the scripted model repeats itself); fourth: a trap.
+    client = Client([
+        reply(ToolUse("t1", "compare_periods", COMPARE_ARGS)), reply(Text(answer)), reply(Text(answer)),
+        reply(Text("TRANSLATION CALL MUST NOT HAPPEN")),
+    ])
     monkeypatch.setattr(deps_module, "get_llm_client", lambda: client)
     response = http.post("/chat", json={"message": "How did phosphates change?", "country": "IT", "index": "water-parameters", **extra})
     assert response.status_code == 200, response.text
@@ -376,7 +384,9 @@ def test_a_withheld_answer_is_never_translated_and_the_notice_is_localised(http,
     body, client = chat(http, monkeypatch, UNGROUNDED, language="es-MX")
     assert body["status"] == "withheld-ungrounded" and body["answer"] is None and body["answer_en"] is None
     assert body["translation_status"] == "not-needed" and body["translated"] is False and body["translation_reasons"] == ["english-answer-ungrounded"]
-    assert len(client.calls) == 2 and body["usage"]["model_calls"] == 2  # the conversation only: no translation call
+    # the conversation and the one revision of the withheld answer: still no translation call
+    assert len(client.calls) == 3 and body["usage"]["model_calls"] == 3
+    assert "TRANSLATION CALL MUST NOT HAPPEN" not in json.dumps(body)
     assert body["notices"]["evidence_notice"] != ENGLISH["evidence_notice"] and body["evidence"]
     assert "intervalo de confianza" in body["notices"]["evidence_notice"]
 

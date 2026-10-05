@@ -5,6 +5,7 @@ import type { ChatResponse } from "@/lib/api";
 import { FALLBACK_DISCLAIMER, FRESHNESS_LABEL, originInfo } from "@/lib/constants";
 import { formatNumber, humanise } from "@/lib/format";
 import { msg, useT } from "@/lib/i18n";
+import { RichText } from "./rich-text";
 import { Disclosure, FreshnessBadge, KeyValues, Notice, OriginBadge, Pill } from "./ui";
 
 export type AnswerState = "answered" | "withheld" | "withheld-ungrounded" | "no-answer" | "budget-exceeded" | "blocked";
@@ -109,7 +110,8 @@ function unique(values: (string | null | undefined)[]): string[] {
 /** "Sources and method": filled only from the metadata the routes returned, never written by the model. */
 export function SourcesAndMethod({ response }: { response: ChatResponse }) {
   const t = useT();
-  const sources = unique(response.citations.map((c) => c.source));
+  const own = t(originInfo(response.origin).label);
+  const sources = unique(response.citations.map((c) => (c.source ? t(originInfo(c.source).label) : null))).filter((s) => s !== own);
   const attributions = unique((response.evidence ?? []).map((e) => e.attribution));
   const limits = unique(response.citations.map((c) => c.limit_basis));
   const notices = Object.entries(response.notices);
@@ -124,7 +126,7 @@ export function SourcesAndMethod({ response }: { response: ChatResponse }) {
       <section aria-label={t("Data source and licence")}>
         <h3 className="mb-1 font-medium">{t("Data source and licence")}</h3>
         <ul className="list-disc space-y-0.5 pl-5">
-          <li>{t(originInfo(response.origin).label)}</li>
+          <li>{own}</li>
           {sources.map((s) => (
             <li key={s}>{s}</li>
           ))}
@@ -149,7 +151,7 @@ export function SourcesAndMethod({ response }: { response: ChatResponse }) {
           <ol className="mt-1 list-decimal space-y-0.5 pl-5">
             {response.steps.map((s) => (
               <li key={s.step}>
-                {s.tool}: {s.summary}
+                {humanise(s.tool)}: {s.summary}
                 {s.ok ? "" : ` ${t("(failed)")}`}
               </li>
             ))}
@@ -175,7 +177,7 @@ export function SourcesAndMethod({ response }: { response: ChatResponse }) {
         <h3 className="mb-1 font-medium">{t("Coverage and flags")}</h3>
         <KeyValues
           items={[
-            [t("Data freshness"), `${t(FRESHNESS_LABEL[response.data_freshness.status] ?? response.data_freshness.status)}${response.data_freshness.as_of ? `, ${t("as of {date}", { date: response.data_freshness.as_of })}` : ""}`],
+            [t("Data freshness"), `${t(FRESHNESS_LABEL[response.data_freshness.status] ?? response.data_freshness.status)}${response.data_freshness.as_of ? `, ${t("as of {date}", { date: response.data_freshness.as_of.slice(0, 10) })}` : ""}`],
             [t("Served from cache"), response.cached ? t("yes") : t("no")],
             [t("Language"), `${response.language}${response.translated ? ` ${t("(translation: {status})", { status: response.translation_status })}` : ""}`],
           ]}
@@ -239,18 +241,18 @@ export function AnswerCard({ response, languageLabel }: { response: ChatResponse
               <div className={`grid gap-3 ${showOriginal ? "md:grid-cols-2" : ""}`}>
                 <div>
                   <h3 className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">{t("Translation ({code})", { code: response.language })}</h3>
-                  <p data-testid="answer-text" className="whitespace-pre-wrap break-words leading-relaxed">{text}</p>
+                  <RichText testId="answer-text" text={text} />
                 </div>
                 {showOriginal ? (
                   <div className="rounded-lg bg-sidebar px-3 py-2">
                     <h3 className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">{t("English original")}</h3>
-                    <p data-testid="answer-original" className="whitespace-pre-wrap break-words leading-relaxed">{response.answer_en}</p>
+                    <RichText testId="answer-original" text={response.answer_en ?? ""} />
                   </div>
                 ) : null}
               </div>
             </>
           ) : (
-            <p data-testid="answer-text" className="whitespace-pre-wrap break-words leading-relaxed">{text}</p>
+            <RichText testId="answer-text" text={text} />
           )}
         </div>
       ) : null}

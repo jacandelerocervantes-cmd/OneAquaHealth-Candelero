@@ -176,3 +176,10 @@ def test_enumerators_number_the_writers_points_but_never_data_nouns():
     assert not check_grounding("Two measurements failed.", {"n": "x"}).grounded
     assert not check_grounding("Twenty points were recorded.", {"n": "x"}).grounded, "only counts of 2-10 are exempt"
     assert not check_grounding("Two points of 87.5 were recorded.", {"n": "x"}).grounded, "the exemption is per number"
+
+
+def test_structural_nouns_that_introduce_the_answers_own_list_are_enumerators_but_data_counts_are_still_checked():
+    for sentence in ("This data holds two kinds of information.", "There are three types of records.", "It has four parts and 5 sections."):
+        assert check_grounding(sentence, {"n": "x"}).grounded, sentence
+    for sentence in ("Two sites exceeded the value.", "Three bathing waters were classified.", "It has four sources.", "Two groups differ."):
+        assert not check_grounding(sentence, {"n": "x"}).grounded, sentence

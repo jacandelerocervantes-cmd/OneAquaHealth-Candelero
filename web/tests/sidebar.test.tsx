@@ -138,12 +138,14 @@ describe("Sidebar", () => {
     expect(options).toEqual(["Greece", "Italy", "Norway"]);
   });
 
-  it("starts a new question inside a section with its +", async () => {
+  it("has no '+' on the sections: a question starts from the one '+ New question' button or from an index", async () => {
     installProxyFetch();
     renderWithApp(<Sidebar />);
-    await userEvent.click(await screen.findByRole("button", { name: "New question in Microbiology" }));
-    expect(push).toHaveBeenCalledWith("/i/bathing-classes");
-    expect(screen.queryByRole("button", { name: "New question in Synthetic labs" })).toBeNull();
+    await screen.findByText("Weather");
+    expect(screen.queryByRole("button", { name: /New question in/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "+" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "+ New question" }));
+    expect(push).toHaveBeenCalledWith("/");
   });
 
   it("collapses a section", async () => {

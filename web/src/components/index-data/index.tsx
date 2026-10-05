@@ -18,7 +18,7 @@ export default function IndexData({ indexId }: { indexId: string }) {
   return (
     <div className="space-y-4" data-testid="index-data">
       {needsSite && !place ? <PickPrompt /> : null}
-      {indexId === "water-quality" && place ? <WaterQualityPanel siteId={place.id} /> : null}
+      {indexId === "water-quality" && place ? <WaterQualityPanel siteId={place.id} measurementsOnly={place.measurementsOnly} /> : null}
       {(indexId === "water-parameters" || indexId === "solids-turbidity" || indexId === "organic-matter") && place ? <MeasurementsPanel siteId={place.id} group={GROUP_OF[indexId]} /> : null}
       {indexId === "weather" && place ? <WeatherPanel key={place.id} siteId={place.id} /> : null}
       {indexId === "river-discharge" && place ? <DischargePanel key={place.id} siteId={place.id} /> : null}
